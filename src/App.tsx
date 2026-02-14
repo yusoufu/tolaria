@@ -105,6 +105,18 @@ function App() {
     setActiveTabPath(path)
   }, [])
 
+  const handleNavigateWikilink = useCallback((target: string) => {
+    // Find entry by title (case-insensitive) or alias
+    const found = entries.find(
+      (e) =>
+        e.title.toLowerCase() === target.toLowerCase() ||
+        e.aliases.some((a) => a.toLowerCase() === target.toLowerCase())
+    )
+    if (found) {
+      handleSelectNote(found)
+    }
+  }, [entries, handleSelectNote])
+
   const handleSidebarResize = useCallback((delta: number) => {
     setSidebarWidth((w) => Math.max(150, Math.min(400, w + delta)))
   }, [])
@@ -136,6 +148,7 @@ function App() {
           activeTabPath={activeTabPath}
           onSwitchTab={handleSwitchTab}
           onCloseTab={handleCloseTab}
+          onNavigateWikilink={handleNavigateWikilink}
         />
       </div>
       {!inspectorCollapsed && <ResizeHandle onResize={handleInspectorResize} />}

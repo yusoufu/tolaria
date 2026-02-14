@@ -7,6 +7,7 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@cod
 import { oneDark } from '@codemirror/theme-one-dark'
 import { livePreview } from './livePreview'
 import { frontmatterHide, findFrontmatter } from './frontmatterHide'
+import { wikilinks } from './wikilinks'
 import type { VaultEntry } from '../types'
 import './Editor.css'
 
@@ -20,6 +21,7 @@ interface EditorProps {
   activeTabPath: string | null
   onSwitchTab: (path: string) => void
   onCloseTab: (path: string) => void
+  onNavigateWikilink: (target: string) => void
 }
 
 const editorTheme = EditorView.theme({
@@ -57,9 +59,11 @@ const editorTheme = EditorView.theme({
   },
 })
 
-export function Editor({ tabs, activeTabPath, onSwitchTab, onCloseTab }: EditorProps) {
+export function Editor({ tabs, activeTabPath, onSwitchTab, onCloseTab, onNavigateWikilink }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<EditorView | null>(null)
+  const navigateRef = useRef(onNavigateWikilink)
+  navigateRef.current = onNavigateWikilink
 
   const activeTab = tabs.find((t) => t.entry.path === activeTabPath) ?? null
 
@@ -92,6 +96,7 @@ export function Editor({ tabs, activeTabPath, onSwitchTab, onCloseTab }: EditorP
         editorTheme,
         livePreview(),
         frontmatterHide(),
+        wikilinks((target) => navigateRef.current(target)),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         EditorView.lineWrapping,
       ],

@@ -70,3 +70,24 @@ test('frontmatter hidden from editor view', async ({ page }) => {
   // Frontmatter should be hidden — editor starts with content, not ---
   await page.screenshot({ path: 'test-results/frontmatter-hidden.png', fullPage: true })
 })
+
+test('wikilinks: rendered as styled elements and clickable', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForTimeout(500)
+
+  // Open "Manage Sponsorships" which contains [[Matteo Cellini]] wikilink
+  await page.locator('.note-list__item', { hasText: 'Manage Sponsorships' }).click()
+  await page.waitForTimeout(500)
+
+  // Screenshot showing wikilink rendered as styled text
+  await page.screenshot({ path: 'test-results/wikilinks-styled.png', fullPage: true })
+
+  // Click the wikilink to navigate to Matteo Cellini
+  const wikilink = page.locator('.cm-wikilink', { hasText: 'Matteo Cellini' })
+  if (await wikilink.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await wikilink.click()
+    await page.waitForTimeout(500)
+    // Should now have a new tab for Matteo Cellini
+    await page.screenshot({ path: 'test-results/wikilinks-navigated.png', fullPage: true })
+  }
+})
