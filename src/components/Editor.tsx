@@ -120,6 +120,7 @@ export function Editor({ tabs, activeTabPath, onSwitchTab, onCloseTab, onNavigat
   if (tabs.length === 0) {
     return (
       <div className="editor">
+        <div className="editor__drag-strip" data-tauri-drag-region />
         <div className="editor__placeholder">
           <p>Select a note to start editing</p>
           <span className="editor__placeholder-hint">Cmd+P to search &middot; Cmd+N to create</span>
@@ -130,7 +131,7 @@ export function Editor({ tabs, activeTabPath, onSwitchTab, onCloseTab, onNavigat
 
   return (
     <div className="editor">
-      <div className="editor__tab-bar">
+      <div className="editor__tab-bar" data-tauri-drag-region>
         {tabs.map((tab) => (
           <div
             key={tab.entry.path}

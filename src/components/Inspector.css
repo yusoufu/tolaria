@@ -19,6 +19,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.inspector__header button {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .inspector__header h3 {
@@ -89,6 +96,61 @@
   text-align: right;
 }
 
+.inspector__prop-value--editable {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+
+.inspector__prop-value--editable:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.inspector__edit-input {
+  background: #2a2a4a;
+  border: 1px solid #4a4a6a;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inspector__edit-input:focus {
+  outline: none;
+  border-color: #7eb8da;
+}
+
+.inspector__prop-label {
+  color: #888;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inspector__prop-delete {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.inspector__prop:hover .inspector__prop-delete {
+  opacity: 1;
+}
+
+.inspector__prop-delete:hover {
+  color: #f44336;
+}
+
 .inspector__status-pill {
   display: inline-block;
   padding: 2px 10px;
@@ -98,6 +160,96 @@
   color: #fff;
 }
 
+.inspector__status-pill--editable {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.inspector__status-pill--editable:hover {
+  opacity: 0.8;
+}
+
+.inspector__bool-toggle {
+  background: none;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.inspector__bool-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #666;
+}
+
+/* List editor */
+.inspector__list-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.inspector__list-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inspector__list-item-text {
+  flex: 1;
+  color: #ccc;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector__list-item-text:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.inspector__list-item-delete {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.inspector__list-item:hover .inspector__list-item-delete {
+  opacity: 1;
+}
+
+.inspector__list-item-delete:hover {
+  color: #f44336;
+}
+
+.inspector__list-add {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  padding: 4px 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.inspector__list-add:hover {
+  color: #888;
+}
+
 .inspector__add-prop {
   margin-top: 12px;
   background: none;
@@ -105,14 +257,67 @@
   color: #666;
   padding: 6px 12px;
   border-radius: 6px;
-  cursor: not-allowed;
+  cursor: pointer;
   font-size: 12px;
   width: 100%;
+  transition: all 0.15s;
 }
 
-.inspector__add-prop:hover {
-  border-color: #555;
-  color: #888;
+.inspector__add-prop:hover:not(:disabled) {
+  border-color: #7eb8da;
+  color: #7eb8da;
+}
+
+.inspector__add-prop:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Add property dialog */
+.inspector__add-dialog {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #2a2a4a;
+  border-radius: 6px;
+  border: 1px solid #4a4a6a;
+}
+
+.inspector__add-dialog-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.inspector__add-dialog-buttons button {
+  background: #3a3a5a;
+  border: none;
+  color: #ccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.inspector__add-dialog-buttons button:hover:not(:disabled) {
+  background: #4a4a6a;
+  color: #fff;
+}
+
+.inspector__add-dialog-buttons button:first-child {
+  background: #4a6a8a;
+}
+
+.inspector__add-dialog-buttons button:first-child:hover:not(:disabled) {
+  background: #5a7a9a;
+}
+
+.inspector__add-dialog-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Relationships */

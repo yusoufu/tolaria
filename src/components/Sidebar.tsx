@@ -6,6 +6,7 @@ interface SidebarProps {
   entries: VaultEntry[]
   selection: SidebarSelection
   onSelect: (selection: SidebarSelection) => void
+  onSelectNote?: (entry: VaultEntry) => void
 }
 
 const FILTERS = [
@@ -23,7 +24,7 @@ const SECTION_GROUPS = [
   { label: 'PROCEDURES', type: 'Procedure' },
 ] as const
 
-export function Sidebar({ entries, selection, onSelect }: SidebarProps) {
+export function Sidebar({ entries, selection, onSelect, onSelectNote }: SidebarProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const toggleSection = (type: string) => {
@@ -41,7 +42,7 @@ export function Sidebar({ entries, selection, onSelect }: SidebarProps) {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar__header">
+      <div className="sidebar__header" data-tauri-drag-region>
         <h2>Laputa</h2>
       </div>
 
@@ -103,7 +104,10 @@ export function Sidebar({ entries, selection, onSelect }: SidebarProps) {
                       className={`sidebar__item${
                         isActive({ kind: 'entity', entry }) ? ' sidebar__item--active' : ''
                       }`}
-                      onClick={() => onSelect({ kind: 'entity', entry })}
+                      onClick={() => {
+                        onSelect({ kind: 'entity', entry })
+                        onSelectNote?.(entry)
+                      }}
                     >
                       {entry.title}
                     </div>
@@ -126,7 +130,10 @@ export function Sidebar({ entries, selection, onSelect }: SidebarProps) {
                   className={`sidebar__topic-item${
                     isActive({ kind: 'topic', entry }) ? ' sidebar__topic-item--active' : ''
                   }`}
-                  onClick={() => onSelect({ kind: 'topic', entry })}
+                  onClick={() => {
+                    onSelect({ kind: 'topic', entry })
+                    onSelectNote?.(entry)
+                  }}
                 >
                   {entry.title}
                 </div>

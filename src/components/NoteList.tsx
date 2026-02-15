@@ -31,12 +31,23 @@ function relativeDate(ts: number | null): string {
   if (!ts) return ''
   const now = Math.floor(Date.now() / 1000)
   const diff = now - ts
+  if (diff < 0) {
+    // Future date - just show the date
+    const date = new Date(ts * 1000)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
   if (diff < 60) return 'just now'
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
   const date = new Date(ts * 1000)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+/** Get the best date to display for an entry (prefer modifiedAt, fallback to createdAt) */
+function getDisplayDate(entry: VaultEntry): number | null {
+  // Prefer modifiedAt (most recent activity), but fall back to createdAt
+  return entry.modifiedAt ?? entry.createdAt
 }
 
 /** Check if a wikilink array (e.g. belongsTo) references a given entry by path stem */
@@ -84,7 +95,7 @@ function filterEntries(entries: VaultEntry[], selection: SidebarSelection): Vaul
 }
 
 function sortByModified(a: VaultEntry, b: VaultEntry): number {
-  return (b.modifiedAt ?? 0) - (a.modifiedAt ?? 0)
+  return (getDisplayDate(b) ?? 0) - (getDisplayDate(a) ?? 0)
 }
 
 const TYPE_PILLS = [
@@ -126,7 +137,7 @@ export function NoteList({ entries, selection, selectedNote, allContent, onSelec
 
   return (
     <div className="note-list">
-      <div className="note-list__header">
+      <div className="note-list__header" data-tauri-drag-region>
         <h3>Notes</h3>
         <div className="note-list__header-right">
           <span className="note-list__count">{displayed.length}</span>
@@ -169,7 +180,7 @@ export function NoteList({ entries, selection, selectedNote, allContent, onSelec
             >
               <div className="note-list__item-top">
                 <div className="note-list__title">{entry.title}</div>
-                <span className="note-list__date">{relativeDate(entry.modifiedAt)}</span>
+                <span className="note-list__date">{relativeDate(getDisplayDate(entry))}</span>
               </div>
               <div className="note-list__snippet">{getSnippet(allContent[entry.path])}</div>
               <div className="note-list__meta">

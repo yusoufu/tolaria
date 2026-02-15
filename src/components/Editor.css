@@ -29,6 +29,14 @@
   color: #383858;
 }
 
+/* Drag strip for frameless window (shown when no tabs are open) */
+.editor__drag-strip {
+  height: 48px;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
 /* Tab bar */
 .editor__tab-bar {
   display: flex;
@@ -36,6 +44,8 @@
   border-bottom: 1px solid #2a2a4a;
   overflow-x: auto;
   flex-shrink: 0;
+  -webkit-app-region: drag;
+  app-region: drag;
 }
 
 .editor__tab-bar::-webkit-scrollbar {
@@ -55,6 +65,8 @@
   max-width: 180px;
   flex-shrink: 0;
   transition: all 0.1s;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .editor__tab:hover {
