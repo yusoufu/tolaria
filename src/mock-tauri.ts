@@ -133,6 +133,23 @@ belongs_to:
 - One clear takeaway
 - Use *real examples* from personal experience
 - Include actionable advice, not just theory
+
+### Checklist
+- [ ] Pick a topic from the backlog
+- [ ] Write outline with 3-5 sections
+- [x] Set up newsletter template
+- [x] Configure email scheduling
+- [ ] Review analytics from last issue
+
+### Nested Topics
+- Content strategy
+  - Newsletter growth
+    - Organic subscribers
+    - Paid acquisition
+  - Social media cross-posting
+- Technical writing
+  - Code examples
+  - Architecture diagrams
 `,
   '/Users/luca/Laputa/procedure/run-sponsorships.md': `---
 title: Run Sponsorships
@@ -332,6 +349,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: 'Luca Rossi',
     cadence: null,
     modifiedAt: Date.now() / 1000,
+    createdAt: null,
     fileSize: 2048,
   },
   {
@@ -346,6 +364,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: 'Luca Rossi',
     cadence: null,
     modifiedAt: Date.now() / 1000 - 3600,
+    createdAt: null,
     fileSize: 1024,
   },
   {
@@ -360,6 +379,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: 'Matteo Cellini',
     cadence: null,
     modifiedAt: Date.now() / 1000 - 7200,
+    createdAt: null,
     fileSize: 890,
   },
   {
@@ -374,6 +394,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: 'Luca Rossi',
     cadence: 'Weekly',
     modifiedAt: Date.now() / 1000 - 86400,
+    createdAt: null,
     fileSize: 512,
   },
   {
@@ -388,6 +409,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: 'Matteo Cellini',
     cadence: 'Weekly',
     modifiedAt: Date.now() / 1000 - 86400 * 2,
+    createdAt: null,
     fileSize: 640,
   },
   {
@@ -402,6 +424,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: 'Luca Rossi',
     cadence: null,
     modifiedAt: Date.now() / 1000 - 86400,
+    createdAt: null,
     fileSize: 3200,
   },
   {
@@ -416,6 +439,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: null,
     cadence: null,
     modifiedAt: Date.now() / 1000 - 3600 * 5,
+    createdAt: null,
     fileSize: 847,
   },
   {
@@ -430,6 +454,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: null,
     cadence: null,
     modifiedAt: Date.now() / 1000 - 86400,
+    createdAt: null,
     fileSize: 560,
   },
   {
@@ -444,6 +469,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: null,
     cadence: null,
     modifiedAt: Date.now() / 1000 - 86400 * 7,
+    createdAt: null,
     fileSize: 320,
   },
   {
@@ -458,6 +484,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: null,
     cadence: null,
     modifiedAt: Date.now() / 1000 - 3600 * 2,
+    createdAt: null,
     fileSize: 1200,
   },
   {
@@ -472,6 +499,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: null,
     cadence: null,
     modifiedAt: Date.now() / 1000 - 86400 * 30,
+    createdAt: null,
     fileSize: 256,
   },
   {
@@ -486,6 +514,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     owner: null,
     cadence: null,
     modifiedAt: Date.now() / 1000 - 86400 * 14,
+    createdAt: null,
     fileSize: 180,
   },
 ]
@@ -529,12 +558,28 @@ const mockHandlers: Record<string, (args: any) => any> = {
 }
 
 export function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI__' in window
+  return typeof window !== 'undefined' && ('__TAURI__' in window || '__TAURI_INTERNALS__' in window)
+}
+
+// Initialize window.__mockContent for browser testing
+if (typeof window !== 'undefined') {
+  window.__mockContent = MOCK_CONTENT
 }
 
 /** Register content for a new entry in mock mode (for get_note_content calls) */
 export function addMockEntry(_entry: VaultEntry, content: string) {
   MOCK_CONTENT[_entry.path] = content
+  if (typeof window !== 'undefined') {
+    window.__mockContent = MOCK_CONTENT
+  }
+}
+
+/** Update content for an existing entry in mock mode */
+export function updateMockContent(path: string, content: string) {
+  MOCK_CONTENT[path] = content
+  if (typeof window !== 'undefined') {
+    window.__mockContent = MOCK_CONTENT
+  }
 }
 
 export async function mockInvoke<T>(cmd: string, args?: any): Promise<T> {

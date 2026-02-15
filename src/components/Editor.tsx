@@ -27,15 +27,20 @@ interface EditorProps {
 const editorTheme = EditorView.theme({
   '&': {
     height: '100%',
-    fontSize: '14px',
+    fontSize: '15px',
   },
   '.cm-scroller': {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    padding: '16px 0',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+    padding: '20px 0',
+    lineHeight: '1.7',
   },
   '.cm-content': {
-    padding: '0 24px',
-    maxWidth: '800px',
+    padding: '0 40px',
+    maxWidth: '760px',
+    caretColor: '#e0e0e0',
+  },
+  '.cm-line': {
+    padding: '1px 0',
   },
   '.cm-gutters': {
     background: '#0f0f1a',
@@ -46,10 +51,11 @@ const editorTheme = EditorView.theme({
     background: '#1a1a2e',
   },
   '.cm-activeLine': {
-    background: '#1a1a2e',
+    background: 'rgba(255, 255, 255, 0.02)',
   },
   '.cm-cursor': {
     borderLeftColor: '#e0e0e0',
+    borderLeftWidth: '1.5px',
   },
   '.cm-selectionBackground': {
     background: '#2a2a5a !important',
