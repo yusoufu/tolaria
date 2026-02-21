@@ -576,6 +576,47 @@ A **book** you're reading or have read. Track reading progress, notes, and key t
 - **Status**: Reading, Finished, Abandoned
 - **Rating**: 1-5 stars
 `,
+  // --- Archived entries ---
+  '/Users/luca/Laputa/project/25q3-website-redesign.md': `---
+title: Website Redesign
+is_a: Project
+status: Done
+archived: true
+owner: Luca Rossi
+belongs_to:
+  - "[[quarter/q3-2025]]"
+---
+
+# Website Redesign
+
+Completed redesign of the company website. Migrated from WordPress to Next.js with improved performance and SEO.
+
+## Results
+- Page load time: 4.2s → 1.1s
+- Organic traffic: +35% in 3 months
+- Bounce rate: 58% → 42%
+`,
+  '/Users/luca/Laputa/experiment/twitter-thread-experiment.md': `---
+title: Twitter Thread Growth Experiment
+is_a: Experiment
+status: Done
+archived: true
+owner: Luca Rossi
+related_to:
+  - "[[responsibility/grow-newsletter]]"
+---
+
+# Twitter Thread Growth Experiment
+
+## Hypothesis
+Publishing 3 Twitter threads per week (instead of 1) will increase newsletter signups by 50%.
+
+## Result
+After 6 weeks, signups increased by only 12%. The additional threads had diminishing returns — quality matters more than quantity.
+
+## Decision
+Reverted to 1 high-quality thread per week. Archived this experiment.
+`,
   // --- Instances of custom types ---
   '/Users/luca/Laputa/recipe/pasta-carbonara.md': `---
 title: Pasta Carbonara
@@ -622,6 +663,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: 'Active',
     owner: 'Luca Rossi',
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000,
     createdAt: null,
     fileSize: 2048,
@@ -643,6 +685,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: 'Active',
     owner: 'Luca Rossi',
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 3600,
     createdAt: null,
     fileSize: 1024,
@@ -669,6 +712,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: 'Active',
     owner: 'Matteo Cellini',
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 7200,
     createdAt: null,
     fileSize: 890,
@@ -689,6 +733,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: 'Active',
     owner: 'Luca Rossi',
     cadence: 'Weekly',
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400,
     createdAt: null,
     fileSize: 512,
@@ -709,6 +754,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: 'Active',
     owner: 'Matteo Cellini',
     cadence: 'Weekly',
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 2,
     createdAt: null,
     fileSize: 640,
@@ -729,6 +775,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: 'Active',
     owner: 'Luca Rossi',
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400,
     createdAt: null,
     fileSize: 3200,
@@ -750,6 +797,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 3600 * 5,
     createdAt: null,
     fileSize: 847,
@@ -771,6 +819,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400,
     createdAt: null,
     fileSize: 560,
@@ -791,6 +840,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 7,
     createdAt: null,
     fileSize: 320,
@@ -810,6 +860,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 3600 * 2,
     createdAt: null,
     fileSize: 1200,
@@ -830,6 +881,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 30,
     createdAt: null,
     fileSize: 256,
@@ -850,6 +902,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 14,
     createdAt: null,
     fileSize: 180,
@@ -870,6 +923,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 3,
     createdAt: null,
     fileSize: 4200,
@@ -890,6 +944,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 7,
     createdAt: null,
     fileSize: 3800,
@@ -911,6 +966,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 10,
     createdAt: null,
     fileSize: 5100,
@@ -932,6 +988,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 320,
@@ -949,6 +1006,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 280,
@@ -966,6 +1024,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 310,
@@ -983,6 +1042,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 290,
@@ -1000,6 +1060,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 200,
@@ -1017,6 +1078,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 180,
@@ -1034,6 +1096,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 170,
@@ -1051,6 +1114,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 200,
@@ -1068,6 +1132,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 90,
     createdAt: null,
     fileSize: 190,
@@ -1086,6 +1151,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 30,
     createdAt: null,
     fileSize: 250,
@@ -1103,6 +1169,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 30,
     createdAt: null,
     fileSize: 220,
@@ -1121,6 +1188,7 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 5,
     createdAt: null,
     fileSize: 420,
@@ -1140,12 +1208,56 @@ const MOCK_ENTRIES: VaultEntry[] = [
     status: null,
     owner: null,
     cadence: null,
+    archived: false,
     modifiedAt: Date.now() / 1000 - 86400 * 14,
     createdAt: null,
     fileSize: 380,
     snippet: 'Essential reading for anyone building distributed systems. Covers replication, partitioning, transactions.',
     relationships: {
       'Type': ['[[type/book]]'],
+    },
+  },
+  // --- Archived entries ---
+  {
+    path: '/Users/luca/Laputa/project/25q3-website-redesign.md',
+    filename: '25q3-website-redesign.md',
+    title: 'Website Redesign',
+    isA: 'Project',
+    aliases: [],
+    belongsTo: ['[[quarter/q3-2025]]'],
+    relatedTo: [],
+    status: 'Done',
+    owner: 'Luca Rossi',
+    cadence: null,
+    archived: true,
+    modifiedAt: Date.now() / 1000 - 86400 * 120,
+    createdAt: null,
+    fileSize: 680,
+    snippet: 'Completed redesign of the company website. Migrated from WordPress to Next.js with improved performance and SEO.',
+    relationships: {
+      'Belongs to': ['[[quarter/q3-2025]]'],
+      'Type': ['[[type/project]]'],
+    },
+  },
+  {
+    path: '/Users/luca/Laputa/experiment/twitter-thread-experiment.md',
+    filename: 'twitter-thread-experiment.md',
+    title: 'Twitter Thread Growth Experiment',
+    isA: 'Experiment',
+    aliases: [],
+    belongsTo: [],
+    relatedTo: ['[[responsibility/grow-newsletter]]'],
+    status: 'Done',
+    owner: 'Luca Rossi',
+    cadence: null,
+    archived: true,
+    modifiedAt: Date.now() / 1000 - 86400 * 90,
+    createdAt: null,
+    fileSize: 520,
+    snippet: 'Publishing 3 Twitter threads per week instead of 1 will increase newsletter signups by 50%. Result: only 12% increase.',
+    relationships: {
+      'Related to': ['[[responsibility/grow-newsletter]]'],
+      'Type': ['[[type/experiment]]'],
     },
   },
 ]
