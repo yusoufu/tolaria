@@ -168,9 +168,13 @@ The app has a **Tauri mock layer** (`src/mock-tauri.ts`): when running in a brow
 
 **Key rule**: passing unit tests ≠ working app. If you can't see it working AND interact with it successfully, it's not done.
 
-### Native App QA (MANDATORY for Tauri-specific features)
+### Native App QA (MANDATORY for ALL features — not just Tauri-specific)
 
-For features involving keyboard shortcuts, menu items, or any native macOS behavior, you MUST also test in the running Tauri app — not just in Chrome. Use the `laputa-qa` skill scripts:
+⚠️ **CRITICAL**: The browser/Chrome test environment uses `mock-tauri.ts` which silently swallows Tauri commands. Bugs that only appear on a real vault with real files **will never surface in Chrome**. You MUST test in the running Tauri app on a real vault.
+
+**Required for every task, no exceptions.** The completion signal must NOT be sent until native QA passes on a real vault.
+
+Use the `laputa-qa` skill scripts:
 
 ```bash
 # Focus the running Laputa app
@@ -188,12 +192,13 @@ bash ~/.openclaw/skills/laputa-qa/scripts/screenshot.sh /tmp/after.png
 bash ~/.openclaw/skills/laputa-qa/scripts/click.sh 400 300
 ```
 
-**When native QA is required:**
-- Any keyboard shortcut added/changed
-- Any Tauri menu item added/changed
-- Any feature that behaves differently in the Tauri shell vs Chrome
+**Native QA is ALWAYS required.** Specifically:
+- Switch the running app to Luca's real vault (`~/Laputa`), not the demo vault
+- If the task touches file save/read: verify actual file content changed on disk with `cat` or `git diff`
+- If the task touches UI: click through the feature with `cliclick`, don't just screenshot
+- If the task fixes a bug: reproduce the original bug on the real vault, confirm it's gone
 
-**Required before firing the completion system event.** If QA reveals a bug, fix it first.
+**Required before firing the completion system event.** If QA reveals a bug, fix it first — do not send the done signal.
 
 ### Playwright for Testing & Verification
 - `npx playwright test` — runs all E2E tests
