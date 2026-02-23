@@ -491,4 +491,74 @@ mod tests {
         assert!(repo.updated_at.is_none());
         assert!(!repo.private);
     }
+
+    #[test]
+    fn test_device_flow_start_serialization() {
+        let start = DeviceFlowStart {
+            device_code: "dc_123".to_string(),
+            user_code: "ABCD-1234".to_string(),
+            verification_uri: "https://github.com/login/device".to_string(),
+            expires_in: 900,
+            interval: 5,
+        };
+        let json = serde_json::to_string(&start).unwrap();
+        let parsed: DeviceFlowStart = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.device_code, "dc_123");
+        assert_eq!(parsed.user_code, "ABCD-1234");
+        assert_eq!(parsed.verification_uri, "https://github.com/login/device");
+        assert_eq!(parsed.expires_in, 900);
+        assert_eq!(parsed.interval, 5);
+    }
+
+    #[test]
+    fn test_device_flow_poll_result_complete() {
+        let result = DeviceFlowPollResult {
+            status: "complete".to_string(),
+            access_token: Some("gho_abc123".to_string()),
+            error: None,
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        let parsed: DeviceFlowPollResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.status, "complete");
+        assert_eq!(parsed.access_token, Some("gho_abc123".to_string()));
+        assert!(parsed.error.is_none());
+    }
+
+    #[test]
+    fn test_device_flow_poll_result_pending() {
+        let result = DeviceFlowPollResult {
+            status: "pending".to_string(),
+            access_token: None,
+            error: Some("authorization_pending".to_string()),
+        };
+        let json = serde_json::to_string(&result).unwrap();
+        let parsed: DeviceFlowPollResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.status, "pending");
+        assert!(parsed.access_token.is_none());
+        assert_eq!(
+            parsed.error,
+            Some("authorization_pending".to_string())
+        );
+    }
+
+    #[test]
+    fn test_github_user_serialization() {
+        let user = GitHubUser {
+            login: "lucaong".to_string(),
+            name: Some("Luca Ongaro".to_string()),
+            avatar_url: "https://avatars.githubusercontent.com/u/123".to_string(),
+        };
+        let json = serde_json::to_string(&user).unwrap();
+        let parsed: GitHubUser = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.login, "lucaong");
+        assert_eq!(parsed.name, Some("Luca Ongaro".to_string()));
+    }
+
+    #[test]
+    fn test_github_user_deserialization_null_name() {
+        let json = r#"{"login":"bot","name":null,"avatar_url":"https://x"}"#;
+        let user: GitHubUser = serde_json::from_str(json).unwrap();
+        assert_eq!(user.login, "bot");
+        assert!(user.name.is_none());
+    }
 }

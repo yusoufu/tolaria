@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { SettingsPanel } from './SettingsPanel'
 import type { Settings } from '../types'
+
+// Mock the tauri/mock-tauri calls used by GitHubSection
+const mockInvokeFn = vi.fn()
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...args: unknown[]) => mockInvokeFn(...args),
+}))
+vi.mock('../mock-tauri', () => ({
+  isTauri: () => false,
+  mockInvoke: (...args: unknown[]) => mockInvokeFn(...args),
+}))
 
 const emptySettings: Settings = {
   anthropic_key: null,
@@ -188,5 +198,98 @@ describe('SettingsPanel', () => {
     )
     const updatedInput = screen.getByTestId('settings-key-anthropic') as HTMLInputElement
     expect(updatedInput.value).toBe('new-key')
+  })
+
+  describe('GitHub OAuth section', () => {
+    it('shows Login with GitHub button when not connected', () => {
+      render(
+        <SettingsPanel open={true} settings={emptySettings} onSave={onSave} onClose={onClose} />
+      )
+      expect(screen.getByTestId('github-login')).toBeInTheDocument()
+      expect(screen.getByText('Login with GitHub')).toBeInTheDocument()
+    })
+
+    it('does not show GitHub token input field', () => {
+      render(
+        <SettingsPanel open={true} settings={emptySettings} onSave={onSave} onClose={onClose} />
+      )
+      expect(screen.queryByTestId('settings-key-github-token')).not.toBeInTheDocument()
+      expect(screen.queryByPlaceholderText('ghp_... or gho_...')).not.toBeInTheDocument()
+    })
+
+    it('shows connected state with username when GitHub is connected', () => {
+      const connectedSettings: Settings = {
+        ...emptySettings,
+        github_token: 'gho_test_token',
+        github_username: 'lucaong',
+      }
+      render(
+        <SettingsPanel open={true} settings={connectedSettings} onSave={onSave} onClose={onClose} />
+      )
+      expect(screen.getByTestId('github-connected')).toBeInTheDocument()
+      expect(screen.getByText('lucaong')).toBeInTheDocument()
+      expect(screen.getByText('Connected')).toBeInTheDocument()
+      expect(screen.getByTestId('github-disconnect')).toBeInTheDocument()
+    })
+
+    it('clears GitHub connection on disconnect', () => {
+      const connectedSettings: Settings = {
+        ...emptySettings,
+        github_token: 'gho_test_token',
+        github_username: 'lucaong',
+      }
+      render(
+        <SettingsPanel open={true} settings={connectedSettings} onSave={onSave} onClose={onClose} />
+      )
+      fireEvent.click(screen.getByTestId('github-disconnect'))
+
+      // onSave should be called with cleared GitHub fields
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+        github_token: null,
+        github_username: null,
+      }))
+    })
+
+    it('shows waiting state with user code during OAuth flow', async () => {
+      mockInvokeFn.mockImplementation(async (cmd: string) => {
+        if (cmd === 'github_device_flow_start') {
+          return {
+            device_code: 'test_device_code',
+            user_code: 'TEST-1234',
+            verification_uri: 'https://github.com/login/device',
+            expires_in: 900,
+            interval: 5,
+          }
+        }
+        if (cmd === 'github_device_flow_poll') {
+          return { status: 'pending', access_token: null, error: 'authorization_pending' }
+        }
+        return null
+      })
+
+      // Mock window.open
+      const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null)
+
+      render(
+        <SettingsPanel open={true} settings={emptySettings} onSave={onSave} onClose={onClose} />
+      )
+
+      fireEvent.click(screen.getByTestId('github-login'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('github-waiting')).toBeInTheDocument()
+        expect(screen.getByTestId('github-user-code')).toHaveTextContent('TEST-1234')
+      })
+
+      expect(windowOpen).toHaveBeenCalledWith('https://github.com/login/device', '_blank')
+      windowOpen.mockRestore()
+    })
+
+    it('shows GitHub section description about connecting', () => {
+      render(
+        <SettingsPanel open={true} settings={emptySettings} onSave={onSave} onClose={onClose} />
+      )
+      expect(screen.getByText(/Connect your GitHub account/)).toBeInTheDocument()
+    })
   })
 })
