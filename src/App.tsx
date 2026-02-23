@@ -17,7 +17,13 @@ import { useEditorSave } from './hooks/useEditorSave'
 import { useAppKeyboard } from './hooks/useAppKeyboard'
 import { useViewMode } from './hooks/useViewMode'
 import { useEntryActions } from './hooks/useEntryActions'
-import { isTauri } from './mock-tauri'
+import { invoke } from '@tauri-apps/api/core'
+import { isTauri, mockInvoke } from './mock-tauri'
+import { pickFolder } from './utils/vault-dialog'
+
+function tauriCall<T>(command: string, args: Record<string, unknown>): Promise<T> {
+  return isTauri() ? invoke<T>(command, args) : mockInvoke<T>(command, args)
+}
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'
 import { useUpdater } from './hooks/useUpdater'
 import { UpdateBanner } from './components/UpdateBanner'
@@ -117,6 +123,43 @@ function App() {
     handleSwitchVault(path)
     setToastMessage(`Vault "${label}" cloned and opened`)
   }, [handleSwitchVault])
+
+  const addAndSwitchVault = useCallback((path: string, label: string) => {
+    setExtraVaults(prev => {
+      if (prev.some(v => v.path === path)) return prev
+      return [...prev, { label, path }]
+    })
+    handleSwitchVault(path)
+  }, [handleSwitchVault])
+
+  const handleOpenLocalFolder = useCallback(async () => {
+    try {
+      const path = await pickFolder('Open vault folder')
+      if (!path) return
+      const label = path.split('/').pop() || 'Local Vault'
+      addAndSwitchVault(path, label)
+      setToastMessage(`Vault "${label}" opened`)
+    } catch (err) {
+      console.error('Failed to open local folder:', err)
+      setToastMessage(`Failed to open folder: ${err}`)
+    }
+  }, [addAndSwitchVault])
+
+  const handleCreateNewVault = useCallback(async () => {
+    try {
+      const name = prompt('New vault name:')
+      if (!name) return
+      const parentDir = await pickFolder('Choose location for new vault')
+      if (!parentDir) return
+      const fullPath = `${parentDir}/${name}`
+      await tauriCall('create_vault_dir', { path: fullPath })
+      addAndSwitchVault(fullPath, name)
+      setToastMessage(`Vault "${name}" created`)
+    } catch (err) {
+      console.error('Failed to create vault:', err)
+      setToastMessage(`Failed to create vault: ${err}`)
+    }
+  }, [addAndSwitchVault])
 
   useEffect(() => {
     if (!notes.activeTabPath) { setGitHistory([]); return }
@@ -228,7 +271,7 @@ function App() {
           />
         </div>
       </div>
-      <StatusBar noteCount={vault.entries.length} vaultPath={vaultPath} vaults={allVaults} onSwitchVault={handleSwitchVault} onOpenSettings={() => setShowSettings(true)} onConnectGitHub={() => setShowGitHubVault(true)} hasGitHub={!!settings.github_token} />
+      <StatusBar noteCount={vault.entries.length} vaultPath={vaultPath} vaults={allVaults} onSwitchVault={handleSwitchVault} onOpenSettings={() => setShowSettings(true)} onOpenLocalFolder={handleOpenLocalFolder} onCreateNewVault={handleCreateNewVault} onConnectGitHub={() => setShowGitHubVault(true)} hasGitHub={!!settings.github_token} />
       <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
       <QuickOpenPalette open={showQuickOpen} entries={vault.entries} onSelect={notes.handleSelectNote} onClose={() => setShowQuickOpen(false)} />
       <CreateTypeDialog open={showCreateTypeDialog} onClose={() => setShowCreateTypeDialog(false)} onCreate={handleCreateType} />

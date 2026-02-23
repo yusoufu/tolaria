@@ -134,6 +134,11 @@ fn clone_repo(url: String, token: String, local_path: String) -> Result<String, 
     github::clone_repo(&url, &token, &local_path)
 }
 
+#[tauri::command]
+fn create_vault_dir(path: String) -> Result<(), String> {
+    std::fs::create_dir_all(&path).map_err(|e| format!("Failed to create directory: {e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -145,6 +150,8 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            app.handle().plugin(tauri_plugin_dialog::init())?;
 
             #[cfg(desktop)]
             {
@@ -204,7 +211,8 @@ pub fn run() {
             save_settings,
             github_list_repos,
             github_create_repo,
-            clone_repo
+            clone_repo,
+            create_vault_dir
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
