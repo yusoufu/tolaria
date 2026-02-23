@@ -171,7 +171,11 @@ mod tests {
     #[test]
     fn test_migrate_file_adds_type_and_removes_is_a() {
         let tmp = tempdir().unwrap();
-        let path = write_file(tmp.path(), "note.md", "---\nis_a: Person\nname: Alice\n---\n# Alice\n");
+        let path = write_file(
+            tmp.path(),
+            "note.md",
+            "---\nis_a: Person\nname: Alice\n---\n# Alice\n",
+        );
         let result = migrate_file_is_a_to_type(&path).unwrap();
         assert!(result, "file should be migrated");
         let content = fs::read_to_string(&path).unwrap();
@@ -182,7 +186,11 @@ mod tests {
     #[test]
     fn test_migrate_file_skips_when_no_frontmatter() {
         let tmp = tempdir().unwrap();
-        let path = write_file(tmp.path(), "note.md", "# Just a heading\nNo frontmatter here.\n");
+        let path = write_file(
+            tmp.path(),
+            "note.md",
+            "# Just a heading\nNo frontmatter here.\n",
+        );
         let result = migrate_file_is_a_to_type(&path).unwrap();
         assert!(!result, "file without frontmatter should not be migrated");
     }
@@ -190,7 +198,11 @@ mod tests {
     #[test]
     fn test_migrate_file_skips_when_already_has_type() {
         let tmp = tempdir().unwrap();
-        let path = write_file(tmp.path(), "note.md", "---\ntype: Person\nname: Alice\n---\n# Alice\n");
+        let path = write_file(
+            tmp.path(),
+            "note.md",
+            "---\ntype: Person\nname: Alice\n---\n# Alice\n",
+        );
         let result = migrate_file_is_a_to_type(&path).unwrap();
         assert!(!result, "file already with type should not be migrated");
     }
@@ -198,7 +210,11 @@ mod tests {
     #[test]
     fn test_migrate_file_skips_when_no_is_a_field() {
         let tmp = tempdir().unwrap();
-        let path = write_file(tmp.path(), "note.md", "---\nname: Alice\ndate: 2024-01-01\n---\n# Alice\n");
+        let path = write_file(
+            tmp.path(),
+            "note.md",
+            "---\nname: Alice\ndate: 2024-01-01\n---\n# Alice\n",
+        );
         let result = migrate_file_is_a_to_type(&path).unwrap();
         assert!(!result);
     }
@@ -208,9 +224,17 @@ mod tests {
     #[test]
     fn test_migrate_vault_returns_count_of_migrated_files() {
         let tmp = tempdir().unwrap();
-        write_file(tmp.path(), "note1.md", "---\nis_a: Person\nname: Alice\n---\n");
+        write_file(
+            tmp.path(),
+            "note1.md",
+            "---\nis_a: Person\nname: Alice\n---\n",
+        );
         write_file(tmp.path(), "note2.md", "---\nis_a: Topic\nname: AI\n---\n");
-        write_file(tmp.path(), "note3.md", "---\ntype: Event\nname: Conf\n---\n");
+        write_file(
+            tmp.path(),
+            "note3.md",
+            "---\ntype: Event\nname: Conf\n---\n",
+        );
         let count = migrate_is_a_to_type(tmp.path().to_str().unwrap()).unwrap();
         assert_eq!(count, 2, "should migrate exactly 2 files");
     }
