@@ -46,9 +46,10 @@ function TrashDateLine({ entry }: { entry: VaultEntry }) {
   )
 }
 
-export function NoteItem({ entry, isSelected, typeEntryMap, onClickNote }: {
+export function NoteItem({ entry, isSelected, isModified, typeEntryMap, onClickNote }: {
   entry: VaultEntry
   isSelected: boolean
+  isModified?: boolean
   typeEntryMap: Record<string, VaultEntry>
   onClickNote: (entry: VaultEntry, e: React.MouseEvent) => void
 }) {
@@ -74,6 +75,14 @@ export function NoteItem({ entry, isSelected, typeEntryMap, onClickNote }: {
       <TypeIcon width={14} height={14} className="absolute right-3 top-2.5" style={{ color: typeColor }} data-testid="type-icon" />
       <div className="pr-5">
         <div className={cn("truncate text-[13px] text-foreground", isSelected ? "font-semibold" : "font-medium")}>
+          {isModified && (
+            <span
+              className="mr-1.5 inline-block align-middle"
+              style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-orange)', verticalAlign: 'middle' }}
+              data-testid="modified-indicator"
+              title="Modified (uncommitted)"
+            />
+          )}
           {entry.title}
           {entry.archived && (
             <span className="ml-1.5 inline-block align-middle text-muted-foreground" style={{ fontSize: 9, fontWeight: 500, background: 'var(--muted)', borderRadius: 4, padding: '1px 4px', verticalAlign: 'middle' }}>

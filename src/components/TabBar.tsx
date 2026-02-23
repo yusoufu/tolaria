@@ -12,6 +12,7 @@ interface Tab {
 interface TabBarProps {
   tabs: Tab[]
   activeTabPath: string | null
+  isModified?: (path: string) => boolean
   onSwitchTab: (path: string) => void
   onCloseTab: (path: string) => void
   onCreateNote?: () => void
@@ -151,10 +152,11 @@ function DropIndicator({ side }: { side: 'left' | 'right' }) {
   )
 }
 
-function TabItem({ tab, isActive, isEditing, isDragging, showDropBefore, showDropAfter, onSwitch, onClose, onDoubleClick, onRenameSave, onRenameCancel, dragProps }: {
+function TabItem({ tab, isActive, isEditing, isModified, isDragging, showDropBefore, showDropAfter, onSwitch, onClose, onDoubleClick, onRenameSave, onRenameCancel, dragProps }: {
   tab: Tab
   isActive: boolean
   isEditing: boolean
+  isModified: boolean
   isDragging: boolean
   showDropBefore: boolean
   showDropAfter: boolean
@@ -191,6 +193,14 @@ function TabItem({ tab, isActive, isEditing, isDragging, showDropBefore, showDro
         <span className="truncate" onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick() }}>
           {tab.entry.title}
         </span>
+      )}
+      {isModified && (
+        <span
+          className="shrink-0"
+          style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-orange)' }}
+          data-testid="tab-modified-indicator"
+          title="Modified (uncommitted)"
+        />
       )}
       <button
         className={cn(
@@ -233,7 +243,7 @@ function TabBarActions({ onCreateNote }: { onCreateNote?: () => void }) {
 // --- Main TabBar ---
 
 export const TabBar = memo(function TabBar({
-  tabs, activeTabPath, onSwitchTab, onCloseTab, onCreateNote, onReorderTabs, onRenameTab,
+  tabs, activeTabPath, isModified, onSwitchTab, onCloseTab, onCreateNote, onReorderTabs, onRenameTab,
 }: TabBarProps) {
   const { dragIndex, dropIndex, handleDragStart, handleDragEnd, handleDragOver, handleDrop, handleBarDragLeave } = useTabDrag(onReorderTabs)
   const [editingPath, setEditingPath] = useState<string | null>(null)
@@ -251,6 +261,7 @@ export const TabBar = memo(function TabBar({
           tab={tab}
           isActive={tab.entry.path === activeTabPath}
           isEditing={editingPath === tab.entry.path}
+          isModified={isModified?.(tab.entry.path) ?? false}
           isDragging={dragIndex !== null}
           showDropBefore={dropIndex === index}
           showDropAfter={dropIndex === index + 1 && index === tabs.length - 1}

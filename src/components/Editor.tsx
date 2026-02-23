@@ -439,6 +439,7 @@ export const Editor = memo(function Editor({
     <TabBar
       tabs={tabs}
       activeTabPath={activeTabPath}
+      isModified={isModified}
       onSwitchTab={onSwitchTab}
       onCloseTab={onCloseTab}
       onCreateNote={onCreateNote}

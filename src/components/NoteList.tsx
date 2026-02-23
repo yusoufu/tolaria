@@ -247,6 +247,11 @@ function NoteListInner({ entries, selection, selectedNote, allContent, modifiedF
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
   const [sortPrefs, setSortPrefs] = useState<Record<string, SortConfig>>(loadSortPreferences)
 
+  const modifiedPathSet = useMemo(
+    () => new Set((modifiedFiles ?? []).map((f) => f.path)),
+    [modifiedFiles],
+  )
+
   const handleSortChange = useCallback((groupLabel: string, option: SortOption, direction: SortDirection) => {
     setSortPrefs((prev) => { const next = { ...prev, [groupLabel]: { option, direction } }; saveSortPreferences(next); return next })
   }, [])
@@ -267,8 +272,8 @@ function NoteListInner({ entries, selection, selectedNote, allContent, modifiedF
   }, [onSelectNote, onReplaceActiveTab])
 
   const renderItem = useCallback((entry: VaultEntry) => (
-    <NoteItem key={entry.path} entry={entry} isSelected={selectedNote?.path === entry.path} typeEntryMap={typeEntryMap} onClickNote={handleClickNote} />
-  ), [selectedNote?.path, handleClickNote, typeEntryMap])
+    <NoteItem key={entry.path} entry={entry} isSelected={selectedNote?.path === entry.path} isModified={modifiedPathSet.has(entry.path)} typeEntryMap={typeEntryMap} onClickNote={handleClickNote} />
+  ), [selectedNote?.path, handleClickNote, typeEntryMap, modifiedPathSet])
 
   return (
     <div className="flex flex-col overflow-hidden border-r border-border bg-card text-foreground" style={{ height: '100%' }}>

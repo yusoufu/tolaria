@@ -91,6 +91,7 @@ function App() {
     updateVaultContent: vault.updateContent,
     setTabs: notes.setTabs,
     setToastMessage,
+    onAfterSave: vault.loadModifiedFiles,
   })
 
   const entryActions = useEntryActions({
@@ -271,7 +272,7 @@ function App() {
           />
         </div>
       </div>
-      <StatusBar noteCount={vault.entries.length} vaultPath={vaultPath} vaults={allVaults} onSwitchVault={handleSwitchVault} onOpenSettings={() => setShowSettings(true)} onOpenLocalFolder={handleOpenLocalFolder} onCreateNewVault={handleCreateNewVault} onConnectGitHub={() => setShowGitHubVault(true)} hasGitHub={!!settings.github_token} />
+      <StatusBar noteCount={vault.entries.length} modifiedCount={vault.modifiedFiles.length} vaultPath={vaultPath} vaults={allVaults} onSwitchVault={handleSwitchVault} onOpenSettings={() => setShowSettings(true)} onOpenLocalFolder={handleOpenLocalFolder} onCreateNewVault={handleCreateNewVault} onConnectGitHub={() => setShowGitHubVault(true)} hasGitHub={!!settings.github_token} />
       <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
       <QuickOpenPalette open={showQuickOpen} entries={vault.entries} onSelect={notes.handleSelectNote} onClose={() => setShowQuickOpen(false)} />
       <CreateTypeDialog open={showCreateTypeDialog} onClose={() => setShowCreateTypeDialog(false)} onCreate={handleCreateType} />

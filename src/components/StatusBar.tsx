@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Package, GitBranch, RefreshCw, Sparkles, FileText, Bell, Settings, FolderOpen, Check, Github, FolderPlus } from 'lucide-react'
+import { Package, GitBranch, RefreshCw, Sparkles, FileText, Bell, Settings, FolderOpen, Check, Github, FolderPlus, CircleDot } from 'lucide-react'
 
 export interface VaultOption {
   label: string
@@ -8,6 +8,7 @@ export interface VaultOption {
 
 interface StatusBarProps {
   noteCount: number
+  modifiedCount?: number
   vaultPath: string
   vaults: VaultOption[]
   onSwitchVault: (path: string) => void
@@ -121,7 +122,7 @@ const ICON_STYLE = { display: 'flex', alignItems: 'center', gap: 4 } as const
 const DISABLED_STYLE = { display: 'flex', alignItems: 'center', opacity: 0.4, cursor: 'not-allowed' } as const
 const SEP_STYLE = { color: 'var(--border)' } as const
 
-export function StatusBar({ noteCount, vaultPath, vaults, onSwitchVault, onOpenSettings, onOpenLocalFolder, onCreateNewVault, onConnectGitHub, hasGitHub }: StatusBarProps) {
+export function StatusBar({ noteCount, modifiedCount = 0, vaultPath, vaults, onSwitchVault, onOpenSettings, onOpenLocalFolder, onCreateNewVault, onConnectGitHub, hasGitHub }: StatusBarProps) {
   return (
     <footer style={{ height: 30, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--sidebar)', borderTop: '1px solid var(--border)', padding: '0 8px', fontSize: 11, color: 'var(--muted-foreground)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -132,6 +133,12 @@ export function StatusBar({ noteCount, vaultPath, vaults, onSwitchVault, onOpenS
         <span style={ICON_STYLE}><GitBranch size={13} />main</span>
         <span style={SEP_STYLE}>|</span>
         <span style={ICON_STYLE}><RefreshCw size={13} style={{ color: 'var(--accent-green)' }} />Synced 2m ago</span>
+        {modifiedCount > 0 && (
+          <>
+            <span style={SEP_STYLE}>|</span>
+            <span style={ICON_STYLE} data-testid="status-modified-count"><CircleDot size={13} style={{ color: 'var(--accent-orange)' }} />{modifiedCount} pending</span>
+          </>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={ICON_STYLE}><Sparkles size={13} style={{ color: 'var(--accent-purple)' }} />Claude Sonnet 4</span>

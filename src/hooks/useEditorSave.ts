@@ -12,13 +12,14 @@ interface EditorSaveConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Tab types vary between layers
   setTabs: (fn: SetStateAction<any[]>) => void
   setToastMessage: (msg: string | null) => void
+  onAfterSave?: () => void
 }
 
 /**
  * Hook that manages explicit save (Cmd+S) for editor content.
  * Tracks pending (unsaved) content and provides save + pre-rename helpers.
  */
-export function useEditorSave({ updateVaultContent, setTabs, setToastMessage }: EditorSaveConfig) {
+export function useEditorSave({ updateVaultContent, setTabs, setToastMessage, onAfterSave }: EditorSaveConfig) {
   const pendingContentRef = useRef<{ path: string; content: string } | null>(null)
 
   const updateTabAndContent = useCallback((path: string, content: string) => {
@@ -41,11 +42,12 @@ export function useEditorSave({ updateVaultContent, setTabs, setToastMessage }: 
       await saveNote(pending.path, pending.content)
       pendingContentRef.current = null
       setToastMessage('Saved')
+      onAfterSave?.()
     } catch (err) {
       console.error('Save failed:', err)
       setToastMessage(`Save failed: ${err}`)
     }
-  }, [saveNote, setToastMessage])
+  }, [saveNote, setToastMessage, onAfterSave])
 
   /** Called by Editor onChange — buffers the latest content without saving */
   const handleContentChange = useCallback((path: string, content: string) => {

@@ -1654,9 +1654,9 @@ function mockModifiedFiles(): ModifiedFile[] {
       status: 'modified',
     },
     {
-      path: '/Users/luca/Laputa/note/new-draft.md',
-      relativePath: 'note/new-draft.md',
-      status: 'untracked',
+      path: '/Users/luca/Laputa/essay/ai-agents-primer.md',
+      relativePath: 'essay/ai-agents-primer.md',
+      status: 'added',
     },
   ]
 }
@@ -1700,6 +1700,7 @@ index abc1234..${shortHash} 100644
 }
 
 let mockHasChanges = true
+const mockSavedPaths = new Set<string>()
 
 let mockSettings: Settings = {
   anthropic_key: null,
@@ -1714,11 +1715,19 @@ const mockHandlers: Record<string, (args: any) => any> = {
   get_note_content: (args: { path: string }) => MOCK_CONTENT[args.path] ?? '',
   get_all_content: () => MOCK_CONTENT,
   get_file_history: (args: { path: string }) => mockFileHistory(args.path),
-  get_modified_files: () => mockHasChanges ? mockModifiedFiles() : [],
+  get_modified_files: () => {
+    const base = mockHasChanges ? mockModifiedFiles() : []
+    const basePaths = new Set(base.map((f) => f.path))
+    const extra: ModifiedFile[] = [...mockSavedPaths]
+      .filter((p) => !basePaths.has(p))
+      .map((p) => ({ path: p, relativePath: p.split('/').slice(-2).join('/'), status: 'modified' as const }))
+    return [...base, ...extra]
+  },
   get_file_diff: (args: { path: string }) => mockFileDiff(args.path),
   get_file_diff_at_commit: (args: { path: string; commitHash: string }) => mockFileDiffAtCommit(args.path, args.commitHash),
   git_commit: (args: { message: string }) => {
     mockHasChanges = false
+    mockSavedPaths.clear()
     return `[main abc1234] ${args.message}\n 3 files changed`
   },
   git_push: () => {
@@ -1743,6 +1752,7 @@ const mockHandlers: Record<string, (args: any) => any> = {
   },
   save_note_content: (args: { path: string; content: string }) => {
     MOCK_CONTENT[args.path] = args.content
+    mockSavedPaths.add(args.path)
     if (typeof window !== 'undefined') {
       window.__mockContent = MOCK_CONTENT
     }
