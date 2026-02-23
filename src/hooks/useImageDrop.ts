@@ -44,7 +44,10 @@ interface UseImageDropOptions {
 export function useImageDrop({ editor, containerRef, vaultPath }: UseImageDropOptions) {
   const [isDragOver, setIsDragOver] = useState(false)
   const vaultPathRef = useRef(vaultPath)
-  vaultPathRef.current = vaultPath
+
+  useEffect(() => {
+    vaultPathRef.current = vaultPath
+  }, [vaultPath])
 
   useEffect(() => {
     const container = containerRef.current
