@@ -1,40 +1,104 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { isTauri } from '../mock-tauri'
 
-/**
- * Checks for OTA updates on app startup (Tauri only).
- * If an update is available, shows a native confirm dialog and
- * downloads + installs + relaunches if the user accepts.
- */
-export function useUpdater() {
+const RELEASE_NOTES_URL = 'https://refactoringhq.github.io/laputa-app/'
+
+export type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'available'; version: string; notes: string | undefined }
+  | { state: 'downloading'; version: string; progress: number }
+  | { state: 'ready'; version: string }
+  | { state: 'error' }
+
+export interface UpdateActions {
+  startDownload: () => void
+  openReleaseNotes: () => void
+  dismiss: () => void
+}
+
+export function useUpdater(): { status: UpdateStatus; actions: UpdateActions } {
+  const [status, setStatus] = useState<UpdateStatus>({ state: 'idle' })
+  const updateRef = useRef<unknown>(null)
+
   useEffect(() => {
     if (!isTauri()) return
 
     const checkForUpdates = async () => {
       try {
         const { check } = await import('@tauri-apps/plugin-updater')
-        const { relaunch } = await import('@tauri-apps/plugin-process')
-
         const update = await check()
-        if (!update) return
+        if (!update) return // up to date
 
-        const yes = window.confirm(
-          `A new version (${update.version}) is available.\n\n` +
-            (update.body ? `${update.body}\n\n` : '') +
-            'Do you want to update and restart now?'
-        )
-        if (!yes) return
-
-        await update.downloadAndInstall()
-        await relaunch()
-      } catch (err) {
-        // Silently log — update check failures should never block the app
-        console.warn('[updater] Failed to check for updates:', err)
+        updateRef.current = update
+        setStatus({
+          state: 'available',
+          version: update.version,
+          notes: update.body ?? undefined,
+        })
+      } catch {
+        // Network error or 404 — fail silently
+        console.warn('[updater] Failed to check for updates')
       }
     }
 
-    // Delay slightly so the app can render first
+    // Delay so the app can render first
     const timer = setTimeout(checkForUpdates, 3000)
     return () => clearTimeout(timer)
   }, [])
+
+  const startDownload = useCallback(async () => {
+    const update = updateRef.current as {
+      version: string
+      downloadAndInstall: (cb: (event: { event: string; data?: { contentLength?: number; chunkLength?: number } }) => void) => Promise<void>
+    } | null
+    if (!update) return
+
+    let totalBytes = 0
+    let downloadedBytes = 0
+
+    setStatus({ state: 'downloading', version: update.version, progress: 0 })
+
+    try {
+      await update.downloadAndInstall((event) => {
+        if (event.event === 'Started' && event.data?.contentLength) {
+          totalBytes = event.data.contentLength
+        } else if (event.event === 'Progress' && event.data?.chunkLength) {
+          downloadedBytes += event.data.chunkLength
+          const progress = totalBytes > 0 ? Math.min(downloadedBytes / totalBytes, 1) : 0
+          setStatus({ state: 'downloading', version: update.version, progress })
+        } else if (event.event === 'Finished') {
+          setStatus({ state: 'ready', version: update.version })
+        }
+      })
+
+      // If Finished wasn't emitted via callback, set ready after await resolves
+      setStatus((prev) => (prev.state === 'downloading' ? { state: 'ready', version: update.version } : prev))
+    } catch {
+      console.warn('[updater] Download failed')
+      setStatus({ state: 'error' })
+    }
+  }, [])
+
+  const openReleaseNotes = useCallback(() => {
+    window.open(RELEASE_NOTES_URL, '_blank')
+  }, [])
+
+  const dismiss = useCallback(() => {
+    setStatus({ state: 'idle' })
+  }, [])
+
+  return { status, actions: { startDownload, openReleaseNotes, dismiss } }
+}
+
+/**
+ * Trigger app restart after an update has been downloaded.
+ * Separated so the component can call it on button click.
+ */
+export async function restartApp(): Promise<void> {
+  try {
+    const { relaunch } = await import('@tauri-apps/plugin-process')
+    await relaunch()
+  } catch {
+    console.warn('[updater] Failed to relaunch')
+  }
 }

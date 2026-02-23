@@ -18,6 +18,7 @@ import { useEntryActions } from './hooks/useEntryActions'
 import { isTauri } from './mock-tauri'
 import { useKeyboardNavigation } from './hooks/useKeyboardNavigation'
 import { useUpdater } from './hooks/useUpdater'
+import { UpdateBanner } from './components/UpdateBanner'
 import { setApiKey } from './utils/ai-chat'
 import type { SidebarSelection, GitCommit } from './types'
 import type { VaultOption } from './components/StatusBar'
@@ -139,7 +140,7 @@ function App() {
     handleCloseTabRef: notes.handleCloseTabRef,
   })
 
-  useUpdater()
+  const { status: updateStatus, actions: updateActions } = useUpdater()
 
   useKeyboardNavigation({
     tabs: notes.tabs,
@@ -168,6 +169,7 @@ function App() {
 
   return (
     <div className="app-shell">
+      <UpdateBanner status={updateStatus} actions={updateActions} />
       <div className="app">
         <div className="app__sidebar" style={{ width: layout.sidebarWidth }}>
           <Sidebar entries={vault.entries} selection={selection} onSelect={setSelection} onSelectNote={notes.handleSelectNote} onCreateType={handleCreateNoteImmediate} onCreateNewType={openCreateTypeDialog} onCustomizeType={entryActions.handleCustomizeType} onReorderSections={entryActions.handleReorderSections} modifiedCount={vault.modifiedFiles.length} onCommitPush={() => setShowCommitDialog(true)} />
