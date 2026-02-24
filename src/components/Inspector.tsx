@@ -141,6 +141,7 @@ export function Inspector({
             <>
               <DynamicPropertiesPanel
                 entry={entry} content={content} frontmatter={frontmatter}
+                entries={entries}
                 onUpdateProperty={onUpdateFrontmatter ? handleUpdateProperty : undefined}
                 onDeleteProperty={onDeleteProperty ? handleDeleteProperty : undefined}
                 onAddProperty={onAddProperty ? handleAddProperty : undefined}

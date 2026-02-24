@@ -1,7 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DynamicPropertiesPanel, containsWikilinks } from './DynamicPropertiesPanel'
 import type { VaultEntry } from '../types'
+
+// Radix Select needs ResizeObserver and pointer/scroll APIs in JSDOM
+beforeAll(() => {
+  global.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} }
+  Element.prototype.scrollIntoView = vi.fn()
+  Element.prototype.hasPointerCapture = () => false
+  Element.prototype.setPointerCapture = vi.fn()
+  Element.prototype.releasePointerCapture = vi.fn()
+})
 
 const makeEntry = (overrides: Partial<VaultEntry> = {}): VaultEntry => ({
   path: '/vault/note/test.md',
@@ -218,7 +227,7 @@ describe('DynamicPropertiesPanel', () => {
     expect(onAddProperty).toHaveBeenCalledWith('priority', 'high')
   })
 
-  it('handles navigating to type via click', () => {
+  it('handles navigating to type via click in read-only mode', () => {
     render(
       <DynamicPropertiesPanel
         entry={makeEntry({ isA: 'Project' })}
@@ -229,6 +238,88 @@ describe('DynamicPropertiesPanel', () => {
     )
     fireEvent.click(screen.getByText('Project'))
     expect(onNavigate).toHaveBeenCalledWith('type/project')
+  })
+
+  describe('TypeSelector', () => {
+    const typeEntries = [
+      makeEntry({ path: '/vault/type/project.md', title: 'Project', isA: 'Type' }),
+      makeEntry({ path: '/vault/type/person.md', title: 'Person', isA: 'Type' }),
+      makeEntry({ path: '/vault/type/topic.md', title: 'Topic', isA: 'Type' }),
+    ]
+
+    it('renders as dropdown when editable', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()} content="" frontmatter={{}}
+          entries={typeEntries} onUpdateProperty={onUpdateProperty}
+        />
+      )
+      expect(screen.getByTestId('type-selector')).toBeInTheDocument()
+      expect(screen.getByRole('combobox')).toBeInTheDocument()
+    })
+
+    it('shows available types in dropdown', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()} content="" frontmatter={{}}
+          entries={typeEntries} onUpdateProperty={onUpdateProperty}
+        />
+      )
+      fireEvent.pointerDown(screen.getByRole('combobox'), { button: 0, pointerType: 'mouse' })
+      expect(screen.getByRole('option', { name: 'None' })).toBeInTheDocument()
+      expect(screen.getByRole('option', { name: 'Person' })).toBeInTheDocument()
+      expect(screen.getByRole('option', { name: 'Project' })).toBeInTheDocument()
+      expect(screen.getByRole('option', { name: 'Topic' })).toBeInTheDocument()
+    })
+
+    function openAndSelect(optionName: string) {
+      fireEvent.pointerDown(screen.getByRole('combobox'), { button: 0, pointerType: 'mouse' })
+      fireEvent.click(screen.getByRole('option', { name: optionName }))
+    }
+
+    it('calls onUpdateProperty when type selected', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()} content="" frontmatter={{}}
+          entries={typeEntries} onUpdateProperty={onUpdateProperty}
+        />
+      )
+      openAndSelect('Project')
+      expect(onUpdateProperty).toHaveBeenCalledWith('type', 'Project')
+    })
+
+    it('clears type when None selected', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry({ isA: 'Project' })} content="" frontmatter={{}}
+          entries={typeEntries} onUpdateProperty={onUpdateProperty}
+        />
+      )
+      openAndSelect('None')
+      expect(onUpdateProperty).toHaveBeenCalledWith('type', null)
+    })
+
+    it('shows current type even when not in available types', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry({ isA: 'CustomType' })} content="" frontmatter={{}}
+          entries={typeEntries} onUpdateProperty={onUpdateProperty}
+        />
+      )
+      fireEvent.pointerDown(screen.getByRole('combobox'), { button: 0, pointerType: 'mouse' })
+      expect(screen.getByRole('option', { name: 'CustomType' })).toBeInTheDocument()
+    })
+
+    it('shows None placeholder when entry has no type', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry({ isA: null })} content="" frontmatter={{}}
+          entries={typeEntries} onUpdateProperty={onUpdateProperty}
+        />
+      )
+      expect(screen.getByTestId('type-selector')).toBeInTheDocument()
+      expect(screen.getByText('None')).toBeInTheDocument()
+    })
   })
 
   it('renders modified date', () => {

@@ -4,6 +4,7 @@ import type { FrontmatterValue } from './Inspector'
 import type { ParsedFrontmatter } from '../utils/frontmatter'
 import { EditableValue, TagPillList } from './EditableValue'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getTypeColor, getTypeLightColor } from '../utils/typeColors'
 import { countWords } from '../utils/wikilinks'
 
@@ -143,7 +144,9 @@ function AddPropertyForm({ onAdd, onCancel }: { onAdd: (key: string, value: stri
   )
 }
 
-function TypeRow({ isA, onNavigate }: { isA?: string | null; onNavigate?: (target: string) => void }) {
+const TYPE_NONE = '__none__'
+
+function ReadOnlyType({ isA, onNavigate }: { isA?: string | null; onNavigate?: (target: string) => void }) {
   if (!isA) return null
   return (
     <div className="flex items-center justify-between">
@@ -157,6 +160,47 @@ function TypeRow({ isA, onNavigate }: { isA?: string | null; onNavigate?: (targe
       ) : (
         <span className="text-right text-[12px] text-secondary-foreground">{isA}</span>
       )}
+    </div>
+  )
+}
+
+function TypeSelector({ isA, availableTypes, onUpdateProperty, onNavigate }: {
+  isA?: string | null; availableTypes: string[]
+  onUpdateProperty?: (key: string, value: FrontmatterValue) => void
+  onNavigate?: (target: string) => void
+}) {
+  if (!onUpdateProperty) return <ReadOnlyType isA={isA} onNavigate={onNavigate} />
+
+  const currentValue = isA || TYPE_NONE
+  const options = isA && !availableTypes.includes(isA)
+    ? [...availableTypes, isA].sort((a, b) => a.localeCompare(b))
+    : availableTypes
+
+  return (
+    <div className="flex items-center justify-between" data-testid="type-selector">
+      <span className="font-mono-overline shrink-0 text-muted-foreground">Type</span>
+      <Select value={currentValue} onValueChange={v => onUpdateProperty('type', v === TYPE_NONE ? null : v)}>
+        <SelectTrigger
+          size="sm"
+          className="h-auto min-h-0 gap-1 border-none px-2 py-0.5 shadow-none"
+          style={isA ? {
+            background: getTypeLightColor(isA),
+            color: getTypeColor(isA),
+            fontSize: 12,
+            fontWeight: 500,
+            borderRadius: 6,
+          } : { fontSize: 12, borderRadius: 6 }}
+        >
+          <SelectValue placeholder="None" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={TYPE_NONE}>None</SelectItem>
+          <SelectSeparator />
+          {options.map(type => (
+            <SelectItem key={type} value={type}>{type}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }
@@ -217,6 +261,7 @@ export function DynamicPropertiesPanel({
   entry,
   content,
   frontmatter,
+  entries,
   onUpdateProperty,
   onDeleteProperty,
   onAddProperty,
@@ -225,6 +270,7 @@ export function DynamicPropertiesPanel({
   entry: VaultEntry
   content: string | null
   frontmatter: ParsedFrontmatter
+  entries?: VaultEntry[]
   onUpdateProperty?: (key: string, value: FrontmatterValue) => void
   onDeleteProperty?: (key: string) => void
   onAddProperty?: (key: string, value: FrontmatterValue) => void
@@ -234,6 +280,13 @@ export function DynamicPropertiesPanel({
   const [showAddDialog, setShowAddDialog] = useState(false)
 
   const wordCount = countWords(content ?? '')
+
+  const availableTypes = useMemo(() =>
+    (entries ?? [])
+      .filter(e => e.isA === 'Type')
+      .map(e => e.title)
+      .sort((a, b) => a.localeCompare(b))
+  , [entries])
 
   const propertyEntries = useMemo(() => {
     return Object.entries(frontmatter)
@@ -262,7 +315,7 @@ export function DynamicPropertiesPanel({
     <div className="flex flex-col gap-3">
       {/* Editable properties section */}
       <div className="flex flex-col gap-2">
-        <TypeRow isA={entry.isA} onNavigate={onNavigate} />
+        <TypeSelector isA={entry.isA} availableTypes={availableTypes} onUpdateProperty={onUpdateProperty} onNavigate={onNavigate} />
         {propertyEntries.map(([key, value]) => (
           <PropertyRow key={key} propKey={key} value={value} editingKey={editingKey} onStartEdit={setEditingKey} onSave={handleSaveValue} onSaveList={handleSaveList} onUpdate={onUpdateProperty} onDelete={onDeleteProperty} />
         ))}
