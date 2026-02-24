@@ -13,7 +13,6 @@ interface EditorSaveConfig {
   setTabs: (fn: SetStateAction<any[]>) => void
   setToastMessage: (msg: string | null) => void
   onAfterSave?: () => void
-  onNoteSaved?: (path: string) => void
 }
 
 /**
@@ -22,7 +21,7 @@ interface EditorSaveConfig {
  */
 const noop = () => {}
 
-export function useEditorSave({ updateVaultContent, setTabs, setToastMessage, onAfterSave = noop, onNoteSaved }: EditorSaveConfig) {
+export function useEditorSave({ updateVaultContent, setTabs, setToastMessage, onAfterSave = noop }: EditorSaveConfig) {
   const pendingContentRef = useRef<{ path: string; content: string } | null>(null)
 
   const updateTabAndContent = useCallback((path: string, content: string) => {
@@ -41,9 +40,8 @@ export function useEditorSave({ updateVaultContent, setTabs, setToastMessage, on
     if (pathFilter && pending.path !== pathFilter) return false
     await saveNote(pending.path, pending.content)
     pendingContentRef.current = null
-    onNoteSaved?.(pending.path)
     return true
-  }, [saveNote, onNoteSaved])
+  }, [saveNote])
 
   /** Called by Cmd+S — persists the current editor content to disk */
   const handleSave = useCallback(async () => {

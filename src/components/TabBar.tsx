@@ -174,7 +174,7 @@ function DropIndicator({ side }: { side: 'left' | 'right' }) {
 }
 
 const STATUS_DOT: Record<string, { color: string; testId: string; title: string }> = {
-  new: { color: 'var(--accent-green)', testId: 'tab-new-indicator', title: 'New (unsaved)' },
+  new: { color: 'var(--accent-green)', testId: 'tab-new-indicator', title: 'New (uncommitted)' },
   modified: { color: 'var(--accent-orange)', testId: 'tab-modified-indicator', title: 'Modified (uncommitted)' },
 }
 

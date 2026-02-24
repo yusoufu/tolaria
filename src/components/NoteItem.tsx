@@ -47,7 +47,7 @@ function TrashDateLine({ entry }: { entry: VaultEntry }) {
 }
 
 const NOTE_STATUS_DOT: Record<string, { color: string; testId: string; title: string }> = {
-  new: { color: 'var(--accent-green)', testId: 'new-indicator', title: 'New (unsaved)' },
+  new: { color: 'var(--accent-green)', testId: 'new-indicator', title: 'New (uncommitted)' },
   modified: { color: 'var(--accent-orange)', testId: 'modified-indicator', title: 'Modified (uncommitted)' },
 }
 

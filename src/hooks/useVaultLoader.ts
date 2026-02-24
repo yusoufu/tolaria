@@ -37,23 +37,17 @@ function useNewNoteTracker() {
     setNewPaths((prev) => new Set(prev).add(path))
   }, [])
 
-  const markSaved = useCallback((path: string) => {
-    setNewPaths((prev) => {
-      if (!prev.has(path)) return prev
-      const next = new Set(prev)
-      next.delete(path)
-      return next
-    })
-  }, [])
-
   const clear = useCallback(() => setNewPaths(new Set()), [])
 
-  return { newPaths, trackNew, markSaved, clear }
+  return { newPaths, trackNew, clear }
 }
 
 export function resolveNoteStatus(path: string, newPaths: Set<string>, modifiedFiles: ModifiedFile[]): NoteStatus {
   if (newPaths.has(path)) return 'new'
-  if (modifiedFiles.some((f) => f.path === path && f.status === 'modified')) return 'modified'
+  const gitEntry = modifiedFiles.find((f) => f.path === path)
+  if (!gitEntry) return 'clean'
+  if (gitEntry.status === 'untracked' || gitEntry.status === 'added') return 'new'
+  if (gitEntry.status === 'modified') return 'modified'
   return 'clean'
 }
 
@@ -120,6 +114,6 @@ export function useVaultLoader(vaultPath: string) {
     entries, allContent, modifiedFiles,
     addEntry, updateEntry, replaceEntry, updateContent,
     loadModifiedFiles, loadGitHistory, loadDiff, loadDiffAtCommit,
-    getNoteStatus, markSaved: tracker.markSaved, commitAndPush,
+    getNoteStatus, commitAndPush,
   }
 }

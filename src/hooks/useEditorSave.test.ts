@@ -107,13 +107,10 @@ describe('useEditorSave', () => {
     })
   })
 
-  it.each([
-    { name: 'onAfterSave', key: 'onAfterSave' as const },
-    { name: 'onNoteSaved', key: 'onNoteSaved' as const },
-  ])('calls $name callback after successful save', async ({ key }) => {
+  it('calls onAfterSave callback after successful save', async () => {
     const cb = vi.fn()
     const { result } = renderHook(() =>
-      useEditorSave({ updateVaultContent, setTabs, setToastMessage, [key]: cb })
+      useEditorSave({ updateVaultContent, setTabs, setToastMessage, onAfterSave: cb })
     )
 
     act(() => {
@@ -142,15 +139,12 @@ describe('useEditorSave', () => {
     expect(onAfterSave).toHaveBeenCalledOnce()
   })
 
-  it.each([
-    { name: 'onAfterSave', key: 'onAfterSave' as const },
-    { name: 'onNoteSaved', key: 'onNoteSaved' as const },
-  ])('does not call $name when save fails', async ({ key }) => {
+  it('does not call onAfterSave when save fails', async () => {
     mockInvokeFn.mockRejectedValueOnce(new Error('Disk full'))
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const cb = vi.fn()
     const { result } = renderHook(() =>
-      useEditorSave({ updateVaultContent, setTabs, setToastMessage, [key]: cb })
+      useEditorSave({ updateVaultContent, setTabs, setToastMessage, onAfterSave: cb })
     )
 
     act(() => {
