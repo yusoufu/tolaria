@@ -2,7 +2,8 @@ import { useMemo, useState, useCallback } from 'react'
 import type { VaultEntry } from '../types'
 import type { FrontmatterValue } from './Inspector'
 import type { ParsedFrontmatter } from '../utils/frontmatter'
-import { EditableValue, TagPillList } from './EditableValue'
+import { EditableValue, TagPillList, UrlValue } from './EditableValue'
+import { isUrlValue } from '../utils/url'
 import { Button } from '@/components/ui/button'
 import { getTypeColor, getTypeLightColor } from '../utils/typeColors'
 import { countWords } from '../utils/wikilinks'
@@ -191,6 +192,7 @@ function PropertyValueCell({ propKey, value, isEditing, onStartEdit, onSave, onS
   if (Array.isArray(value)) return <TagPillList items={value.map(String)} onSave={(items) => onSaveList(propKey, items)} label={propKey} />
   if (isDateKey(propKey)) return <EditableValue {...editProps} />
   if (typeof value === 'boolean') return <BooleanToggle value={value} onToggle={() => onUpdate?.(propKey, !value)} />
+  if (typeof value === 'string' && isUrlValue(value)) return <UrlValue {...editProps} />
   return <EditableValue {...editProps} />
 }
 

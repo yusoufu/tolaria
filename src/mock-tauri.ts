@@ -29,6 +29,7 @@ status: Active
 owner: Luca Rossi
 tags: [Tauri, React, TypeScript, CodeMirror]
 tools: [Vite, Vitest, Playwright]
+url: https://github.com/lucaong/laputa-app
 belongs_to:
   - "[[quarter/q1-2026]]"
 related_to:

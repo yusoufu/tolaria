@@ -502,4 +502,68 @@ describe('DynamicPropertiesPanel', () => {
       expect(screen.getByText('1.0 MB')).toBeInTheDocument()
     })
   })
+
+  describe('URL property rendering', () => {
+    it('renders URL values with link styling instead of plain EditableValue', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()}
+          content=""
+          frontmatter={{ url: 'https://example.com' }}
+          onUpdateProperty={onUpdateProperty}
+        />
+      )
+      expect(screen.getByTestId('url-link')).toBeInTheDocument()
+      expect(screen.getByTestId('url-link')).toHaveTextContent('https://example.com')
+    })
+
+    it('renders bare domain values as URL links', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()}
+          content=""
+          frontmatter={{ website: 'example.com' }}
+          onUpdateProperty={onUpdateProperty}
+        />
+      )
+      expect(screen.getByTestId('url-link')).toBeInTheDocument()
+    })
+
+    it('does not render plain text as URL link', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()}
+          content=""
+          frontmatter={{ cadence: 'Weekly' }}
+          onUpdateProperty={onUpdateProperty}
+        />
+      )
+      expect(screen.queryByTestId('url-link')).not.toBeInTheDocument()
+    })
+
+    it('shows edit button on URL property', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()}
+          content=""
+          frontmatter={{ url: 'https://example.com' }}
+          onUpdateProperty={onUpdateProperty}
+        />
+      )
+      expect(screen.getByTestId('url-edit-btn')).toBeInTheDocument()
+    })
+
+    it('enters edit mode when edit button clicked on URL property', () => {
+      render(
+        <DynamicPropertiesPanel
+          entry={makeEntry()}
+          content=""
+          frontmatter={{ url: 'https://example.com' }}
+          onUpdateProperty={onUpdateProperty}
+        />
+      )
+      fireEvent.click(screen.getByTestId('url-edit-btn'))
+      expect(screen.getByDisplayValue('https://example.com')).toBeInTheDocument()
+    })
+  })
 })

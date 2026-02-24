@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { EditableValue, TagPillList } from './EditableValue'
+import { EditableValue, TagPillList, UrlValue } from './EditableValue'
+import { isUrlValue, normalizeUrl } from '../utils/url'
 
 describe('EditableValue', () => {
   const onSave = vi.fn()
@@ -159,5 +160,122 @@ describe('TagPillList', () => {
     const input = screen.getByPlaceholderText('Tags...')
     fireEvent.blur(input)
     expect(onSave).not.toHaveBeenCalled()
+  })
+})
+
+describe('isUrlValue', () => {
+  it('detects http URLs', () => {
+    expect(isUrlValue('http://example.com')).toBe(true)
+  })
+
+  it('detects https URLs', () => {
+    expect(isUrlValue('https://example.com/path?q=1')).toBe(true)
+  })
+
+  it('detects bare domain names', () => {
+    expect(isUrlValue('example.com')).toBe(true)
+    expect(isUrlValue('docs.google.com/spreadsheets')).toBe(true)
+  })
+
+  it('rejects plain text', () => {
+    expect(isUrlValue('just some text')).toBe(false)
+    expect(isUrlValue('Weekly')).toBe(false)
+    expect(isUrlValue('Luca Rossi')).toBe(false)
+  })
+
+  it('rejects empty strings', () => {
+    expect(isUrlValue('')).toBe(false)
+  })
+
+  it('rejects single words without TLD', () => {
+    expect(isUrlValue('localhost')).toBe(false)
+    expect(isUrlValue('active')).toBe(false)
+  })
+})
+
+describe('normalizeUrl', () => {
+  it('returns http/https URLs unchanged', () => {
+    expect(normalizeUrl('https://example.com')).toBe('https://example.com')
+    expect(normalizeUrl('http://example.com')).toBe('http://example.com')
+  })
+
+  it('prepends https:// to bare domains', () => {
+    expect(normalizeUrl('example.com')).toBe('https://example.com')
+    expect(normalizeUrl('docs.google.com/sheet')).toBe('https://docs.google.com/sheet')
+  })
+})
+
+describe('UrlValue', () => {
+  const onSave = vi.fn()
+  const onCancel = vi.fn()
+  const onStartEdit = vi.fn()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('displays URL text in view mode', () => {
+    render(<UrlValue value="https://example.com" onSave={onSave} onCancel={onCancel} isEditing={false} onStartEdit={onStartEdit} />)
+    expect(screen.getByTestId('url-link')).toHaveTextContent('https://example.com')
+  })
+
+  it('opens URL in new tab on click', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    render(<UrlValue value="https://example.com" onSave={onSave} onCancel={onCancel} isEditing={false} onStartEdit={onStartEdit} />)
+    fireEvent.click(screen.getByTestId('url-link'))
+    expect(openSpy).toHaveBeenCalledWith('https://example.com', '_blank')
+    openSpy.mockRestore()
+  })
+
+  it('normalizes bare domain before opening', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    render(<UrlValue value="example.com" onSave={onSave} onCancel={onCancel} isEditing={false} onStartEdit={onStartEdit} />)
+    fireEvent.click(screen.getByTestId('url-link'))
+    expect(openSpy).toHaveBeenCalledWith('https://example.com', '_blank')
+    openSpy.mockRestore()
+  })
+
+  it('does not open malformed URL', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    render(<UrlValue value="://broken" onSave={onSave} onCancel={onCancel} isEditing={false} onStartEdit={onStartEdit} />)
+    fireEvent.click(screen.getByTestId('url-link'))
+    expect(openSpy).not.toHaveBeenCalled()
+    openSpy.mockRestore()
+  })
+
+  it('shows edit button that calls onStartEdit', () => {
+    render(<UrlValue value="https://example.com" onSave={onSave} onCancel={onCancel} isEditing={false} onStartEdit={onStartEdit} />)
+    fireEvent.click(screen.getByTestId('url-edit-btn'))
+    expect(onStartEdit).toHaveBeenCalled()
+  })
+
+  it('shows input in editing mode', () => {
+    render(<UrlValue value="https://example.com" onSave={onSave} onCancel={onCancel} isEditing={true} onStartEdit={onStartEdit} />)
+    const input = screen.getByDisplayValue('https://example.com')
+    expect(input).toBeInTheDocument()
+    expect(input.tagName).toBe('INPUT')
+  })
+
+  it('calls onSave when Enter is pressed in edit mode', () => {
+    render(<UrlValue value="https://example.com" onSave={onSave} onCancel={onCancel} isEditing={true} onStartEdit={onStartEdit} />)
+    const input = screen.getByDisplayValue('https://example.com')
+    fireEvent.change(input, { target: { value: 'https://new.com' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(onSave).toHaveBeenCalledWith('https://new.com')
+  })
+
+  it('calls onCancel when Escape is pressed in edit mode', () => {
+    render(<UrlValue value="https://example.com" onSave={onSave} onCancel={onCancel} isEditing={true} onStartEdit={onStartEdit} />)
+    const input = screen.getByDisplayValue('https://example.com')
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(onCancel).toHaveBeenCalled()
+  })
+
+  it('calls onSave on blur in edit mode', () => {
+    render(<UrlValue value="https://example.com" onSave={onSave} onCancel={onCancel} isEditing={true} onStartEdit={onStartEdit} />)
+    const input = screen.getByDisplayValue('https://example.com')
+    fireEvent.change(input, { target: { value: 'https://updated.com' } })
+    fireEvent.blur(input)
+    expect(onSave).toHaveBeenCalledWith('https://updated.com')
   })
 })

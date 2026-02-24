@@ -1,4 +1,75 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { normalizeUrl } from '../utils/url'
+
+export function UrlValue({
+  value,
+  onSave,
+  onCancel,
+  isEditing,
+  onStartEdit,
+}: {
+  value: string
+  onSave: (newValue: string) => void
+  onCancel: () => void
+  isEditing: boolean
+  onStartEdit: () => void
+}) {
+  const [editValue, setEditValue] = useState(value)
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onSave(editValue)
+    } else if (e.key === 'Escape') {
+      setEditValue(value)
+      onCancel()
+    }
+  }
+
+  const handleOpen = useCallback(() => {
+    const normalized = normalizeUrl(value)
+    try {
+      new URL(normalized)
+      window.open(normalized, '_blank')
+    } catch {
+      // malformed URL — do nothing
+    }
+  }, [value])
+
+  if (isEditing) {
+    return (
+      <input
+        className="w-full rounded border border-ring bg-muted px-2 py-1 text-[13px] text-foreground outline-none focus:border-primary"
+        type="text"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={() => onSave(editValue)}
+        autoFocus
+      />
+    )
+  }
+
+  return (
+    <span className="group/url inline-flex min-w-0 items-center gap-1">
+      <span
+        className="min-w-0 cursor-pointer truncate rounded px-1 py-0.5 text-right text-secondary-foreground transition-colors hover:text-primary hover:underline"
+        onClick={handleOpen}
+        title={value}
+        data-testid="url-link"
+      >
+        {value || '\u2014'}
+      </span>
+      <button
+        className="shrink-0 border-none bg-transparent p-0 text-[12px] leading-none text-muted-foreground opacity-0 transition-all hover:text-foreground group-hover/url:opacity-100"
+        onClick={onStartEdit}
+        title="Edit URL"
+        data-testid="url-edit-btn"
+      >
+        &#9998;
+      </button>
+    </span>
+  )
+}
 
 export function EditableValue({
   value,
