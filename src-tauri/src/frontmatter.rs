@@ -130,8 +130,8 @@ fn is_list_continuation(line: &str) -> bool {
 fn split_frontmatter(content: &str) -> Result<(&str, &str), String> {
     let after_open = &content[4..];
     // Handle empty frontmatter: closing --- immediately after opening ---\n
-    if after_open.starts_with("---") {
-        return Ok(("", &after_open[3..]));
+    if let Some(stripped) = after_open.strip_prefix("---") {
+        return Ok(("", stripped));
     }
     let fm_end = after_open
         .find("\n---")
