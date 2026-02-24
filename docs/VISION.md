@@ -74,6 +74,78 @@ Developers and technically-minded knowledge workers who:
 
 Broader audiences (non-developers) are a future consideration — they'll need more onboarding and scaffolding to get started, but the underlying model is designed to work for anyone.
 
+## Current state
+
+A living snapshot of what's built vs what's missing. Updated as features ship.
+
+### ✅ What's working today
+
+**Core editor & notes**
+- BlockNote-based editor (block-style, Notion-like) with Markdown files on disk
+- Cmd+S save with dirty state indicator (orange dot = modified, green dot = new)
+- Word count (frontmatter excluded)
+- Rename note by double-clicking tab
+- Drag & drop images into editor
+- Wiki-links with `[[` autocomplete (2+ chars, max 20 results, colored by note type)
+
+**Navigation & layout**
+- 4-panel layout: sidebar / note list / editor / inspector
+- Collapsible sidebar and note list (Cmd+1/2/3)
+- Tabs with drag-to-reorder
+- Quick open (Cmd+P) by title
+- Virtual list rendering for NoteList (handles 9000+ notes without lag)
+
+**Properties & types**
+- Inspector panel with editable vs read-only properties
+- Change note type from Inspector (picker/dropdown)
+- Property value text consistent at 12px
+- URL properties: click to open in browser, underline on hover
+- Bidirectional relationships (Referenced By panel)
+- Editable relations: add/remove linked notes
+- `type:` as canonical key (removed `is a:` property)
+
+**Sections & customization**
+- Sidebar sections with custom icons (290 Phosphor icons, searchable) and colors
+- Changes view: click "N pending" in status bar → filtered list of modified notes
+
+**Git integration**
+- Commit & push from within the app (saves pending changes first)
+- Modified files indicator in status bar, NoteList, and TabBar
+- Git history per note (version history)
+- Dirty state clears correctly after save/rename
+
+**Vault management**
+- Dynamic vault picker (no hardcoded paths)
+- Create new local vault or clone/create from GitHub repo
+- GitHub OAuth login (device flow)
+
+**Settings & infrastructure**
+- Settings panel (Cmd+,): AI provider API keys, stored in app_config_dir
+- In-app auto-updater (Tauri updater + GitHub Releases)
+- CI: lint, TypeScript, tests (84% frontend coverage, 85%+ Rust), CodeScene ≥9.2
+- Universal macOS binary, auto-released on every merge to main
+
+### 🚧 What's missing (Open tasks)
+
+**Bugs**
+- Word count still including some frontmatter in edge cases (under investigation)
+
+**Improvements**
+- Date picker for date-type properties
+- Vista Changes: differentiate new vs modified more clearly
+- Relation editing UX polish
+
+**Features (prioritized)**
+- Full-text search with semantic support (qmd integration)
+- Command palette (Cmd+K) — Raycast-style actions
+- `mock-tauri.ts` and `App.tsx` refactor (code health)
+
+**Vision-level features (not started)**
+- Onboarding / getting started flow with default note types
+- AI-powered features (search, summarization, linking suggestions)
+- Graph view
+- Mobile / web access via Git remote
+
 ## Design principles
 
 1. **Opinionated but not rigid** — ship strong defaults, allow customization where it matters
