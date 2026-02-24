@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
 import type { VaultEntry, ModifiedFile, GitCommit } from '../types'
-import { useVaultLoader } from './useVaultLoader'
+import { useVaultLoader, resolveNoteStatus } from './useVaultLoader'
 
 const mockEntries: VaultEntry[] = [
   {
@@ -166,31 +166,42 @@ describe('useVaultLoader', () => {
       expect(result.current.getNoteStatus('/vault/note/brand-new.md')).toBe('new')
     })
 
-    it('returns clean after markSaved clears new status', async () => {
+    it('returns new for git-untracked files (saved but not committed)', async () => {
+      mockInvokeFn.mockImplementation(((cmd: string) => {
+        if (cmd === 'list_vault') return Promise.resolve(mockEntries)
+        if (cmd === 'get_all_content') return Promise.resolve(mockContent)
+        if (cmd === 'get_modified_files') return Promise.resolve([
+          { path: '/vault/note/brand-new.md', relativePath: 'note/brand-new.md', status: 'untracked' },
+        ])
+        return Promise.resolve(null)
+      }) as typeof defaultMockInvoke)
+
       const { result } = renderHook(() => useVaultLoader('/vault'))
 
       await waitFor(() => {
-        expect(result.current.entries).toHaveLength(1)
-      })
-
-      const newEntry: VaultEntry = {
-        ...mockEntries[0],
-        path: '/vault/note/brand-new.md',
-        filename: 'brand-new.md',
-        title: 'Brand New',
-      }
-
-      act(() => {
-        result.current.addEntry(newEntry, '# Brand New')
+        expect(result.current.modifiedFiles).toHaveLength(1)
       })
 
       expect(result.current.getNoteStatus('/vault/note/brand-new.md')).toBe('new')
+    })
 
-      act(() => {
-        result.current.markSaved('/vault/note/brand-new.md')
+    it('returns new for git-added files (staged but not committed)', async () => {
+      mockInvokeFn.mockImplementation(((cmd: string) => {
+        if (cmd === 'list_vault') return Promise.resolve(mockEntries)
+        if (cmd === 'get_all_content') return Promise.resolve(mockContent)
+        if (cmd === 'get_modified_files') return Promise.resolve([
+          { path: '/vault/note/staged.md', relativePath: 'note/staged.md', status: 'added' },
+        ])
+        return Promise.resolve(null)
+      }) as typeof defaultMockInvoke)
+
+      const { result } = renderHook(() => useVaultLoader('/vault'))
+
+      await waitFor(() => {
+        expect(result.current.modifiedFiles).toHaveLength(1)
       })
 
-      expect(result.current.getNoteStatus('/vault/note/brand-new.md')).toBe('clean')
+      expect(result.current.getNoteStatus('/vault/note/staged.md')).toBe('new')
     })
 
     it('new status takes priority over git modified', async () => {
@@ -224,7 +235,7 @@ describe('useVaultLoader', () => {
       expect(result.current.getNoteStatus('/vault/note/new.md')).toBe('new')
     })
 
-    it('ignores untracked git status for orange dot', async () => {
+    it('treats untracked files as new (green dot, not orange)', async () => {
       mockInvokeFn.mockImplementation(((cmd: string) => {
         if (cmd === 'list_vault') return Promise.resolve(mockEntries)
         if (cmd === 'get_all_content') return Promise.resolve(mockContent)
@@ -240,7 +251,7 @@ describe('useVaultLoader', () => {
         expect(result.current.modifiedFiles).toHaveLength(1)
       })
 
-      expect(result.current.getNoteStatus('/vault/note/hello.md')).toBe('clean')
+      expect(result.current.getNoteStatus('/vault/note/hello.md')).toBe('new')
     })
   })
 
@@ -348,5 +359,37 @@ describe('useVaultLoader', () => {
 
       expect(result.current.modifiedFiles).toHaveLength(1)
     })
+  })
+})
+
+describe('resolveNoteStatus', () => {
+  const mf = (path: string, status: string): ModifiedFile => ({ path, relativePath: path.replace('/vault/', ''), status })
+
+  it('returns new when path is in newPaths (not yet on disk)', () => {
+    expect(resolveNoteStatus('/vault/x.md', new Set(['/vault/x.md']), [])).toBe('new')
+  })
+
+  it('returns new for untracked files in git', () => {
+    expect(resolveNoteStatus('/vault/x.md', new Set(), [mf('/vault/x.md', 'untracked')])).toBe('new')
+  })
+
+  it('returns new for added files in git', () => {
+    expect(resolveNoteStatus('/vault/x.md', new Set(), [mf('/vault/x.md', 'added')])).toBe('new')
+  })
+
+  it('returns modified for git-modified files', () => {
+    expect(resolveNoteStatus('/vault/x.md', new Set(), [mf('/vault/x.md', 'modified')])).toBe('modified')
+  })
+
+  it('returns clean for files not in git status', () => {
+    expect(resolveNoteStatus('/vault/x.md', new Set(), [])).toBe('clean')
+  })
+
+  it('returns clean for deleted files', () => {
+    expect(resolveNoteStatus('/vault/x.md', new Set(), [mf('/vault/x.md', 'deleted')])).toBe('clean')
+  })
+
+  it('newPaths takes priority over git modified', () => {
+    expect(resolveNoteStatus('/vault/x.md', new Set(['/vault/x.md']), [mf('/vault/x.md', 'modified')])).toBe('new')
   })
 })

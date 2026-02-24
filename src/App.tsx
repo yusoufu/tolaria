@@ -87,7 +87,7 @@ function App() {
     updateVaultContent: vault.updateContent,
     setTabs: notes.setTabs,
     setToastMessage,
-    onAfterSave: vault.loadModifiedFiles, onNoteSaved: vault.markSaved,
+    onAfterSave: vault.loadModifiedFiles,
   })
 
   const commitFlow = useCommitFlow({
