@@ -9,7 +9,7 @@ pnpm lint && npx tsc --noEmit       # lint + types
 pnpm test                           # unit tests
 pnpm test:coverage                  # frontend ≥70% coverage
 cargo test                          # Rust tests
-cargo llvm-cov --manifest-path src-tauri/Cargo.toml --fail-under-lines 85
+cargo llvm-cov --manifest-path src-tauri/Cargo.toml --no-clean --fail-under-lines 85
 pre_commit_code_health_safeguard    # CodeScene ≥9.2 — if it fails, fix structurally (see below)
 ```
 
