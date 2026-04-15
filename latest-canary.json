@@ -1,11 +1,11 @@
 {
-  "version": "0.1.1-alpha.202604151747.769",
+  "version": "0.1.1-alpha.202604152048.770",
   "notes": "Alpha build. See https://refactoringhq.github.io/tolaria/ for full release notes.",
-  "pub_date": "2026-04-15T17:52:20Z",
+  "pub_date": "2026-04-15T20:53:19Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSY3I3L2VKNUJ0cU5OSTlJMlM0c0VXYTNVbWJkY1FVek1oUE5CMFpTM3RyZmxlb09QREVmMGVJMUNKU2J0SU1MU0d0QnFmVU9tZStuMWp4RTRqMUdXRFRJc2VBcFAxckFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2Mjc1NTIwCWZpbGU6VG9sYXJpYS5hcHAudGFyLmd6CnhDcHNKNnZraVoyOG9OY2Z0OEFVQmZRZFBOZXJIckFWZytxaVNHanQyb1d3VXkzY0pvSDZISXR2dWJONW53QVk5V29wQTRHNHhNR3BhYTNmTXcrbkF3PT0K",
-      "url": "https://github.com/refactoringhq/tolaria/releases/download/alpha-v0.1.1-alpha.202604151747.769/Tolaria.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSY3I3L2VKNUJ0cUdYdE5KUERyQml4b3ZEclhrblJJRU9TV01sT0dtaGU5Um1yZmIydnNzSnJrWkxqMDliWjNWSktURVE0ZTROc1ErV1F2ck1VUEVPTTUzdUdGUm5GSGdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2Mjg2Mzc0CWZpbGU6VG9sYXJpYS5hcHAudGFyLmd6Cmp1ei9qRmpCY0RacnVSUm91WWQ1U1RyYnY2eFJOQ1NiQzc0MmpWMVRjZGRkUGZHbE9VQUFScnFqV29lTWJDT0hUL2NIRVc4NmxidGZCS081YXg4TERnPT0K",
+      "url": "https://github.com/refactoringhq/tolaria/releases/download/alpha-v0.1.1-alpha.202604152048.770/Tolaria.app.tar.gz"
     }
   }
 }
