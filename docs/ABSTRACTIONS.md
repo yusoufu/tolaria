@@ -473,6 +473,15 @@ Defined in `src/components/editorSchema.tsx` and styled in `src/components/Edito
 - Tolaria keeps `defaultLanguage: "text"` so unlabeled code blocks do not silently become JavaScript while still supporting the packaged language aliases such as `ts` → `typescript`.
 - Inline-code chip styling remains scoped to `.bn-inline-content code`, so fenced `pre > code` nodes keep BlockNote's dark shell instead of inheriting the muted inline surface.
 
+### Markdown Math
+
+Defined in `src/utils/mathMarkdown.ts`, `src/components/editorSchema.tsx`, and styled in `src/components/EditorTheme.css`:
+
+- `$...$` becomes a `mathInline` schema node and line-owned `$$...$$` / multiline `$$` blocks become `mathBlock` nodes.
+- The rich editor renders both node types through KaTeX with `throwOnError: false`, so malformed formulas keep their source visible instead of breaking the note.
+- `serializeMathAwareBlocks()` converts math nodes back to Markdown delimiters before save, raw-mode entry, and editor-position snapshots.
+- Raw CodeMirror mode always shows the plain Markdown source, so imported technical notes stay editable outside Tolaria.
+
 ### Formatting Surface Policy
 
 Defined in `src/components/tolariaEditorFormatting.tsx` and `src/components/tolariaEditorFormattingConfig.ts`:
@@ -490,22 +499,23 @@ Defined in `src/components/tolariaEditorFormatting.tsx` and `src/components/tola
 flowchart LR
     A["📄 Raw markdown\n(from disk)"] --> B["splitFrontmatter()\n→ yaml + body"]
     B --> C["preProcessWikilinks(body)\n[[target]] → ‹token›"]
-    C --> D["tryParseMarkdownToBlocks()\n→ BlockNote block tree"]
-    D --> E["injectWikilinks(blocks)\n‹token› → WikiLink node"]
-    E --> F["editor.replaceBlocks()\n→ rendered editor"]
+    C --> D["preProcessMathMarkdown(body)\n$...$ / $$...$$ → tokens"]
+    D --> E["tryParseMarkdownToBlocks()\n→ BlockNote block tree"]
+    E --> F["injectWikilinks + injectMathInBlocks\n tokens → schema nodes"]
+    F --> G["editor.replaceBlocks()\n→ rendered editor"]
 
     style A fill:#f8f9fa,stroke:#6c757d,color:#000
-    style F fill:#d4edda,stroke:#28a745,color:#000
+    style G fill:#d4edda,stroke:#28a745,color:#000
 ```
 
-> Placeholder tokens use `\u2039` and `\u203A` to avoid colliding with markdown syntax.
+> Wikilink placeholder tokens use `\u2039` and `\u203A`; math placeholder tokens use ASCII sentinels with URI-encoded LaTeX payloads.
 
 ### BlockNote-to-Markdown Pipeline (Save)
 
 ```mermaid
 flowchart LR
     A["✏️ BlockNote blocks\n(editor state)"] --> B["blocksToMarkdownLossy()"]
-    B --> C["postProcessWikilinks()\nWikiLink node → [[target]]"]
+    B --> C["restoreWikilinks + serializeMathAwareBlocks()\nschema nodes → Markdown source"]
     C --> D["prepend frontmatter yaml"]
     D --> E["invoke('save_note_content')\n→ disk write"]
 
@@ -542,6 +552,17 @@ The app uses internal light and dark themes owned by Tolaria (see [ADR-0081](adr
 1. **Global CSS variables** (`src/index.css`): Semantic app colors, borders, surfaces, and interaction states via `:root` / `[data-theme]`, bridged to Tailwind v4
 2. **Editor theme** (`src/theme.json`): BlockNote typography, flattened to CSS vars by `useEditorTheme`
 3. **Runtime theme bridge**: Applies `data-theme` and `.dark` for shadcn/ui, while CodeMirror and editor-specific consumers derive any non-CSS-variable values from the same semantic contract
+
+## Localization
+
+App UI strings are centralized in `src/lib/i18n.ts` (see [ADR-0084](adr/0084-app-localization-foundation.md)):
+
+- `AppLocale`: currently `'en' | 'zh-Hans'`
+- `UiLanguagePreference`: `'system' | AppLocale`; persisted settings serialize `system` as `null`
+- `resolveEffectiveLocale()`: maps an explicit preference or system/browser language list to the effective supported locale
+- `translate()` / `createTranslator()`: resolve keys with English fallback and simple `{name}` interpolation
+
+`App.tsx` owns the effective locale and passes it to localized app chrome through props. Settings and command-palette language commands call back into `saveSettings`, so UI language changes update the current session without touching vault content or reopening the vault.
 
 ## Inspector Abstraction
 
@@ -597,7 +618,7 @@ No indexing step required — search runs directly against the filesystem.
 
 Per-vault settings stored locally and scoped by vault path:
 - Managed by `useVaultConfig` hook and `vaultConfigStore`
-- Settings: zoom, view mode, tag colors, status colors, property display modes, Inbox note-list column overrides, explicit organization workflow toggle
+- Settings: zoom, view mode, editor mode, note layout, tag colors, status colors, property display modes, Inbox/All Notes note-list column overrides, explicit organization workflow toggle
 - One-time migration from localStorage (`configMigration.ts`)
 
 ### AI Guidance Files
@@ -625,6 +646,7 @@ Tolaria tracks managed vault-level AI guidance separately from normal note conte
 `useAiAgentsOnboarding(enabled)` adds a separate first-launch agent step:
 - Reads a local dismissal flag for the AI agents prompt (with a legacy fallback to the older Claude-only key)
 - Only shows after vault onboarding has already resolved to a ready state
+- Uses `get_ai_agents_status`, whose backend treats the app process path, login-shell path, and supported local/toolchain/app install locations, including Windows `.exe` and npm/pnpm/Scoop shim paths, as valid CLI-agent sources
 - Persists dismissal locally once the user continues
 
 ### Remote Git Operations
@@ -652,11 +674,12 @@ interface Settings {
   anonymous_id: string | null
   release_channel: string | null // null = stable default, "alpha" = every-push prerelease feed
   theme_mode: 'light' | 'dark' | null
+  ui_language: 'en' | 'zh-Hans' | null
   default_ai_agent: 'claude_code' | 'codex' | null
 }
 ```
 
-Managed by `useSettings` hook and `SettingsPanel` component. `theme_mode` is installation-local because it controls device comfort rather than vault structure. `default_ai_agent` is an installation-local preference that selects which supported CLI agent the AI panel, command palette AI mode, and status bar should target by default. The AutoGit fields are also installation-local: `useAutoGit` consumes them to schedule automatic checkpoints, while `useCommitFlow` and the status bar quick action reuse the same checkpoint runner and deterministic automatic commit message generation.
+Managed by `useSettings` hook and `SettingsPanel` component. `theme_mode` is installation-local because it controls device comfort rather than vault structure. `ui_language` is also installation-local: `null` follows the supported system language with English fallback, while explicit values pin the UI language for this installation. `default_ai_agent` is an installation-local preference that selects which supported CLI agent the AI panel, command palette AI mode, and status bar should target by default. The AutoGit fields are also installation-local: `useAutoGit` consumes them to schedule automatic checkpoints, while `useCommitFlow` and the status bar quick action reuse the same checkpoint runner and deterministic automatic commit message generation.
 
 ## Telemetry
 
@@ -696,6 +719,6 @@ Managed by `useSettings` hook and `SettingsPanel` component. `theme_mode` is ins
 - **`download_and_install_app_update`** — Channel-aware download/install with streamed progress events.
 
 ### CI/CD
-- **`.github/workflows/release.yml`** — Alpha prereleases from every push to `main` using calendar-semver technical versions (`YYYY.M.D-alpha.N`) and clean `Alpha YYYY.M.D.N` release names. GitHub alpha tags zero-pad the prerelease sequence (`alpha-vYYYY.M.D-alpha.NNNN`) so GitHub release ordering stays chronological while the shipped app version remains `YYYY.M.D-alpha.N`. Publishes `alpha/latest.json` and refreshes the legacy `latest.json` / `latest-canary.json` aliases to the alpha feed.
-- **`.github/workflows/release-stable.yml`** — Stable releases from `stable-vYYYY.M.D` tags. Publishes `stable/latest.json`, macOS Apple Silicon artifacts, Windows x64 installers/updater bundles, and Linux x86_64 `.deb` / AppImage artifacts.
+- **`.github/workflows/release.yml`** — Alpha prereleases from every push to `main` using calendar-semver technical versions (`YYYY.M.D-alpha.N`) and clean `Alpha YYYY.M.D.N` release names. GitHub alpha tags zero-pad the prerelease sequence (`alpha-vYYYY.M.D-alpha.NNNN`) so GitHub release ordering stays chronological while the shipped app version remains `YYYY.M.D-alpha.N`. Publishes `alpha/latest.json` with macOS Apple Silicon/Intel, Linux x64, and Windows x64 updater entries, then refreshes the legacy `latest.json` / `latest-canary.json` aliases to the alpha feed.
+- **`.github/workflows/release-stable.yml`** — Stable releases from `stable-vYYYY.M.D` tags. Publishes `stable/latest.json`, macOS Apple Silicon and Intel DMG/updater artifacts, Windows x64 installers/updater bundles, and Linux x86_64 `.deb` / AppImage artifacts.
 - **Beta cohorts** are handled in PostHog targeting only. There is no beta updater feed.

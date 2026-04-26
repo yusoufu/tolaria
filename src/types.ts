@@ -1,5 +1,6 @@
 import type { AiAgentId } from './lib/aiAgents'
 import type { ThemeMode } from './lib/themeMode'
+import type { AppLocale } from './lib/i18n'
 
 export interface VaultEntry {
   path: string
@@ -91,6 +92,7 @@ export interface Settings {
   anonymous_id: string | null
   release_channel: string | null
   theme_mode?: ThemeMode | null
+  ui_language?: AppLocale | null
   initial_h1_auto_rename_enabled?: boolean | null
   default_ai_agent?: AiAgentId | null
 }
@@ -150,10 +152,14 @@ export interface AllNotesConfig {
 }
 
 /** Vault-scoped UI configuration stored locally per vault path. */
+export type NoteLayout = 'centered' | 'left'
+
+/** Vault-scoped UI configuration stored locally per vault path. */
 export interface VaultConfig {
   zoom: number | null
   view_mode: string | null
   editor_mode: string | null
+  note_layout?: NoteLayout | null
   tag_colors: Record<string, string> | null
   status_colors: Record<string, string> | null
   property_display_modes: Record<string, string> | null

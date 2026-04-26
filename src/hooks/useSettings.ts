@@ -2,12 +2,27 @@ import { useCallback, useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { isTauri, mockInvoke } from '../mock-tauri'
 import { normalizeStoredAiAgent } from '../lib/aiAgents'
+import { serializeUiLanguagePreference } from '../lib/i18n'
 import { normalizeReleaseChannel, serializeReleaseChannel } from '../lib/releaseChannel'
 import { normalizeThemeMode } from '../lib/themeMode'
 import type { Settings } from '../types'
 
-function tauriCall<T>(command: string, tauriArgs: Record<string, unknown>, mockArgs?: Record<string, unknown>): Promise<T> {
-  return isTauri() ? invoke<T>(command, tauriArgs) : mockInvoke<T>(command, mockArgs ?? tauriArgs)
+async function invokeNativeIfAvailable<T>(command: string, tauriArgs: Record<string, unknown>): Promise<T | undefined> {
+  try {
+    return await invoke<T>(command, tauriArgs)
+  } catch (err) {
+    if (isTauri()) throw err
+    return undefined
+  }
+}
+
+async function tauriCall<T>(command: string, tauriArgs: Record<string, unknown>, mockArgs?: Record<string, unknown>): Promise<T> {
+  if (isTauri()) return invoke<T>(command, tauriArgs)
+
+  const nativeResult = await invokeNativeIfAvailable<T>(command, tauriArgs)
+  if (nativeResult !== undefined) return nativeResult
+
+  return mockInvoke<T>(command, mockArgs ?? tauriArgs)
 }
 
 const EMPTY_SETTINGS: Settings = {
@@ -22,6 +37,7 @@ const EMPTY_SETTINGS: Settings = {
   anonymous_id: null,
   release_channel: null,
   theme_mode: null,
+  ui_language: null,
   default_ai_agent: null,
 }
 
@@ -32,6 +48,7 @@ function normalizeSettings(settings: Settings): Settings {
       normalizeReleaseChannel(settings.release_channel),
     ),
     theme_mode: normalizeThemeMode(settings.theme_mode),
+    ui_language: serializeUiLanguagePreference(settings.ui_language),
     default_ai_agent: normalizeStoredAiAgent(settings.default_ai_agent),
   }
 }

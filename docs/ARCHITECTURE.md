@@ -32,6 +32,7 @@ Examples:
 - ✅ Vault: `_pinned_properties` in a Type note (every device should show the same pinned properties)
 - ✅ Vault: `_icon: shapes` in a Type note (icon is part of the type's identity)
 - ✅ App settings: `zoom: 1.3` (machine-specific preference)
+- ✅ App settings: `ui_language: "zh-Hans"` (installation-specific UI language)
 
 ### No hardcoded exceptions
 
@@ -99,6 +100,7 @@ flowchart LR
 | Frontmatter parsing | gray_matter | 0.2 |
 | AI (agent panel) | CLI agent adapters (Claude Code + Codex) | - |
 | Search | Keyword (walkdir-based file scan) | - |
+| Localization | App-owned dictionary (`src/lib/i18n.ts`) | English fallback + `zh-Hans` |
 | MCP | @modelcontextprotocol/sdk | 1.0 |
 | Tests | Vitest (unit), Playwright (E2E/smoke), cargo test (Rust) | - |
 | Package manager | pnpm | - |
@@ -178,7 +180,7 @@ flowchart TD
 
 - **Sidebar** (150-400px, resizable): Top-level filters (All Notes, Changes, Pulse), collapsible type-based section groups, and a dedicated folder tree. The folder tree shows user-created folders plus default vault folders such as `attachments/` and `views/`; only the dedicated `type/` directory stays hidden because note types already have their own sidebar section. The folder tree supports inline folder creation and rename, exposes a right-click menu for rename/delete, and auto-expands ancestor folders when the current selection or rename target is nested. Type sections and folder rows also act as note drop targets: dropping a note on a type updates its `type:` frontmatter, while dropping it on a folder runs the same crash-safe move path as the command palette flow. Each type can have a custom icon, color, sort, and visibility set via its type document in `type/`.
 - **Note List / Pulse View** (200-500px, resizable): When a section group, filter, or saved view is selected, shows filtered notes with snippets, modified dates, status indicators, and per-context note-list controls. When `selection.kind === 'entity'`, the same pane enters **Neighborhood** mode: the source note is pinned at the top as a normal active row, outgoing relationship groups render first, inverse/backlink groups follow, empty groups stay visible with `0`, and duplicates across groups are allowed when multiple relationships are true. Plain click / `Enter` open the focused note without replacing the current Neighborhood, while Cmd/Ctrl-click and Cmd/Ctrl-`Enter` pivot the pane into the clicked note's Neighborhood. Saved views reuse the same sort and visible-column controls as the built-in lists, and those changes persist back into the view `.yml` definition (`sort`, `listPropertiesDisplay`). When Pulse filter is active, shows `PulseView` — a chronological git activity feed grouped by day.
-- **Editor** (flex, fills remaining space): Single note open at a time (no tabs — see ADR-0003). Breadcrumb bar with word count, BlockNote rich text editor with wikilink support, markdown-safe formatting controls, and schema-backed fenced code block highlighting via `@blocknote/code-block`. Can toggle to diff view (modified files) or raw CodeMirror view. Decomposed into `Editor` (orchestrator), `EditorContent`, `EditorRightPanel`, `SingleEditorView`, with hooks `useDiffMode`, `useEditorFocus`, and `useEditorSave`, plus the `useRawMode`/`RawEditorView` pair for markdown source editing. Rich BlockNote input and raw CodeMirror input both route typed `->`, `<-`, and `<->` through the shared `src/utils/arrowLigatures.ts` resolver so arrow ligatures stay consistent across mode switches while escaped ASCII sequences remain literal. Navigation history (Cmd+[/]) replaces tabs.
+- **Editor** (flex, fills remaining space): Single note open at a time (no tabs — see ADR-0003). Breadcrumb bar with word count and note-layout toggle, BlockNote rich text editor with wikilink support, Markdown-compatible inline/display math rendering, markdown-safe formatting controls, and schema-backed fenced code block highlighting via `@blocknote/code-block`. Can toggle to diff view (modified files), raw CodeMirror view, or a wide-screen left-aligned note column while preserving the same readable max width. Decomposed into `Editor` (orchestrator), `EditorContent`, `EditorRightPanel`, `SingleEditorView`, with hooks `useDiffMode`, `useEditorFocus`, and `useEditorSave`, plus the `useRawMode`/`RawEditorView` pair for markdown source editing. Rich BlockNote input and raw CodeMirror input both route typed `->`, `<-`, and `<->` through the shared `src/utils/arrowLigatures.ts` resolver so arrow ligatures stay consistent across mode switches while escaped ASCII sequences remain literal. Navigation history (Cmd+[/]) replaces tabs.
 - **Inspector / AI Agent** (200-500px or 40px collapsed): Toggles between Inspector (frontmatter, relationships, instances, backlinks, git history) and AI Agent panel (the selected CLI agent with tool execution). The Sparkle icon in the breadcrumb bar toggles between them. Per-note `icon` is a suggested Inspector property and the command palette's "Set Note Icon" action opens that field directly. When viewing a Type note, the Inspector shows an **Instances** section listing all notes of that type (sorted by modified_at desc, capped at 50).
 
 Panels are separated by `ResizeHandle` components that support drag-to-resize.
@@ -217,7 +219,7 @@ Full agent mode — spawns the selected local CLI agent as a subprocess with too
 3. **Agent adapters** — Claude Code still uses `claude_cli.rs`; Codex runs through `codex exec --json` with the CLI's normal approval / sandbox defaults
 4. **MCP Integration** — Claude receives the generated MCP config file path, while Codex receives the same Tolaria MCP server via transient `-c mcp_servers.tolaria.*` config overrides
 
-Claude Code availability intentionally does not depend only on the desktop app's inherited `PATH`. The detector checks the current process path, the user's login shell, and supported local/toolchain install locations such as native `~/.local/bin`, local `~/.claude/local`, Mise/asdf shims, npm-global, and Homebrew paths so first-run onboarding works on fresh macOS installs.
+CLI-agent availability intentionally does not depend only on the desktop app's inherited `PATH`. The detectors check the current process path, the user's login shell, and supported local/toolchain install locations such as native `~/.local/bin`, local `~/.claude/local`, Mise/asdf shims, npm-global, Homebrew, Windows `%APPDATA%\npm`/pnpm/Scoop shims, Windows `.exe` launchers, and the macOS Codex app resource path so first-run onboarding works on fresh macOS and Windows installs.
 
 #### Agent Event Flow
 
@@ -315,6 +317,7 @@ The MCP server (`mcp-server/`) exposes vault operations as tools for AI assistan
 Tolaria can register itself as an MCP server in:
 - `~/.claude.json` and `~/.claude/mcp.json` (Claude Code compatibility across current CLI and legacy MCP-file setups)
 - `~/.cursor/mcp.json` (Cursor)
+- `~/.config/mcp/mcp.json` (generic MCP-compatible clients)
 
 That setup is user-initiated through the status bar / command palette flow, not a startup side effect. Registration is non-destructive (additive, preserves other servers), uses `upsert` semantics, and can be reversed by removing Tolaria's entry again. The `useMcpStatus` hook tracks whether the active vault is explicitly connected (`checking | installed | not_installed`).
 
@@ -335,7 +338,7 @@ flowchart TD
     end
 
     TAURI["Tauri (mcp.rs)"] -->|"spawn on startup"| MCP
-    UI["Status bar / Command Palette"] -->|"explicit setup or disconnect"| CFG["~/.claude.json\n~/.claude/mcp.json\n~/.cursor/mcp.json"]
+    UI["Status bar / Command Palette"] -->|"explicit setup or disconnect"| CFG["~/.claude.json\n~/.claude/mcp.json\n~/.cursor/mcp.json\n~/.config/mcp/mcp.json"]
 ```
 
 ### WebSocket Bridge
@@ -362,8 +365,8 @@ flowchart LR
 | Function | Purpose |
 |----------|---------|
 | `spawn_ws_bridge(vault_path)` | Spawns `ws-bridge.js` as child process with VAULT_PATH env |
-| `register_mcp(vault_path)` | Writes Tolaria entry to Claude Code and Cursor MCP configs on explicit user request |
-| `remove_mcp()` | Removes Tolaria's MCP entry from Claude Code and Cursor configs |
+| `register_mcp(vault_path)` | Writes Tolaria entry to Claude Code, Cursor, and generic MCP configs on explicit user request |
+| `remove_mcp()` | Removes Tolaria's MCP entry from Claude Code, Cursor, and generic MCP configs |
 | `upsert_mcp_config(path, entry)` | Atomic config file update (create/merge, preserves others) |
 
 The `WsBridgeChild` state wrapper in `lib.rs` ensures the bridge process is killed on app exit via `RunEvent::Exit` handler. The same desktop layer now keeps the Tauri asset protocol scoped to the active vault instead of every filesystem path.
@@ -413,6 +416,12 @@ The app uses internal app-owned light and dark themes (see [ADR-0081](adr/0081-i
 2. **Editor theme** (`src/theme.json`): BlockNote-specific typography. Flattened to CSS vars by `useEditorTheme`; editor colors resolve through the same semantic app variables.
 3. **Theme runtime**: Applies `data-theme` and the shadcn-compatible `.dark` class before React consumers render, with a localStorage mirror to avoid startup flash when dark mode is selected.
 
+## Localization
+
+Tolaria's app chrome uses an app-owned localization layer in `src/lib/i18n.ts` (see [ADR-0084](adr/0084-app-localization-foundation.md)). English is the canonical fallback, and Simplified Chinese (`zh-Hans`) is the first additional locale. The installation-local `ui_language` setting stores an explicit locale when the user chooses one; `null` means "follow the system language when Tolaria supports it, otherwise English." Missing translation keys fall back to English so partially translated locales do not render broken placeholders.
+
+`App.tsx` derives the effective locale from settings and browser/system language hints, then passes it down to localized surfaces. Settings exposes a keyboard-accessible shadcn `Select`, and the command palette includes actions to open language settings or switch directly to a supported language.
+
 ## Vault Management
 
 ### Vault List
@@ -434,6 +443,7 @@ Per-vault UI settings stored locally per vault path (currently in browser/Tauri 
 - `zoom`: Float zoom level (0.8–1.5)
 - `view_mode`: "all" | "editor-list" | "editor-only"
 - `editor_mode`: "raw" | "preview" (persists across note switches and sessions)
+- `note_layout`: "centered" | "left" (wide-screen note column alignment for rich and raw editors)
 - `tag_colors`, `status_colors`: Custom color overrides
 - `property_display_modes`: Property display preferences
 - `inbox.noteListProperties`: Optional Inbox-only property chip override for the note list
@@ -697,9 +707,9 @@ The vault backend (`src-tauri/src/vault/`) is split into focused submodules:
 | `check_claude_cli` | Check if Claude CLI is available |
 | `get_ai_agents_status` | Check Claude Code + Codex availability |
 | `stream_ai_agent` | Stream the selected CLI agent through the normalized event layer |
-| `register_mcp_tools` | Register MCP in Claude/Cursor config for the active vault |
-| `remove_mcp_tools` | Remove Tolaria's MCP entry from Claude/Cursor config |
-| `check_mcp_status` | Check whether the active vault is explicitly registered in Claude/Cursor config |
+| `register_mcp_tools` | Register MCP in Claude/Cursor/generic config for the active vault |
+| `remove_mcp_tools` | Remove Tolaria's MCP entry from Claude/Cursor/generic config |
+| `check_mcp_status` | Check whether the active vault is explicitly registered in Claude/Cursor/generic config |
 
 The desktop MCP WebSocket bridge is intentionally local-only. `mcp-server/ws-bridge.js` binds both bridge ports to loopback, rejects non-loopback clients, accepts browser/Tauri origins only on the UI bridge, and rejects browser-origin requests on the tool bridge so remote pages cannot drive vault tools directly.
 
@@ -761,7 +771,7 @@ No Redux or global context. State lives in the root `App.tsx` and custom hooks:
 | `useCommitFlow` | Commit dialog state, shared manual/automatic checkpoint runner | Git commit/push orchestration |
 | `useGitRemoteStatus` | `remoteStatus`, `refreshRemoteStatus()` | On-demand remote detection for commit UI |
 | `useUnifiedSearch` | Query, results, loading state | Keyword search |
-| `useSettings` | App settings (telemetry, release channel, theme mode, auto-sync interval, AutoGit thresholds, default AI agent) | Persistent settings |
+| `useSettings` | App settings (telemetry, release channel, theme mode, UI language, auto-sync interval, AutoGit thresholds, default AI agent) | Persistent settings |
 | `useVaultConfig` | Per-vault UI preferences | Vault-specific config |
 | `appCommandDispatcher` | Canonical shortcut/menu command IDs | Shared execution path for renderer and native menu commands |
 
@@ -810,12 +820,13 @@ push to main
       → if stable already uses today, advance alpha to the next calendar day so semver still increases
   → build job:
       → pnpm install, stamp version, pnpm build, tauri build --target aarch64-apple-darwin --bundles app
-      → upload signed .app.tar.gz + .sig updater artifacts
+      → pnpm install, stamp version, pnpm build, tauri build --target x86_64-apple-darwin --bundles app
+      → upload signed Apple Silicon and Intel .app.tar.gz + .sig updater artifacts
   → build-windows job:
       → pnpm install, stamp version, tauri build --target x86_64-pc-windows-msvc --bundles nsis
       → upload NSIS installer, optional MSI artifacts, and signed Windows updater bundles
   → release job:
-      → generate alpha-latest.json
+      → generate alpha-latest.json with darwin-aarch64, darwin-x86_64, Linux, and Windows updater URLs
       → publish GitHub prerelease alpha-vYYYY.M.D-alpha.NNNN named Tolaria Alpha YYYY.M.D.N
   → pages job:
       → build static HTML release history page
@@ -832,7 +843,8 @@ push stable-vYYYY.M.D tag
   → version job: validate YYYY.M.D from the tag
   → build job:
       → pnpm install, stamp version, pnpm build, tauri build --target aarch64-apple-darwin
-      → upload signed .app.tar.gz + .sig and .dmg artifacts
+      → pnpm install, stamp version, pnpm build, tauri build --target x86_64-apple-darwin
+      → upload signed Apple Silicon and Intel .app.tar.gz + .sig and .dmg artifacts
   → build-linux job:
       → pnpm install, stamp version, tauri build --target x86_64-unknown-linux-gnu --bundles deb,appimage
       → upload .deb, .AppImage, and signed Linux updater bundles
@@ -840,7 +852,7 @@ push stable-vYYYY.M.D tag
       → pnpm install, stamp version, tauri build --target x86_64-pc-windows-msvc --bundles nsis
       → upload NSIS installer, optional MSI artifacts, and signed Windows updater bundles
   → release job:
-      → generate stable-latest.json with macOS, Linux, and Windows updater URLs plus platform-specific manual download URLs
+      → generate stable-latest.json with macOS Apple Silicon, macOS Intel, Linux, and Windows updater URLs plus platform-specific manual download URLs
       → publish GitHub release Tolaria YYYY.M.D
   → pages job:
       → publish stable/latest.json

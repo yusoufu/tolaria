@@ -1,12 +1,13 @@
 import { useCallback, useRef } from 'react'
 import type { AiAgentId, AiAgentsStatus } from '../lib/aiAgents'
+import type { AppLocale, UiLanguagePreference } from '../lib/i18n'
 import type { VaultAiGuidanceStatus } from '../lib/vaultAiGuidance'
 import { useAppKeyboard } from './useAppKeyboard'
 import { useCommandRegistry } from './useCommandRegistry'
 import type { CommandAction } from './useCommandRegistry'
 import { useKeyboardNavigation } from './useKeyboardNavigation'
 import { useMenuEvents } from './useMenuEvents'
-import type { SidebarSelection, SidebarFilter, VaultEntry } from '../types'
+import type { NoteLayout, SidebarSelection, SidebarFilter, VaultEntry } from '../types'
 import { requestAddRemote } from '../utils/addRemoteEvents'
 import type { NoteListFilter } from '../utils/noteListHelpers'
 import type { ViewMode } from './useViewMode'
@@ -38,6 +39,8 @@ interface AppCommandsConfig {
   onToggleInspector: () => void
   onToggleDiff?: () => void
   onToggleRawEditor?: () => void
+  noteLayout?: NoteLayout
+  onToggleNoteLayout?: () => void
   activeNoteModified: boolean
   onZoomIn: () => void
   onZoomOut: () => void
@@ -64,6 +67,10 @@ interface AppCommandsConfig {
   onRestoreGettingStarted?: () => void
   isGettingStartedHidden?: boolean
   vaultCount?: number
+  locale?: AppLocale
+  systemLocale?: AppLocale
+  selectedUiLanguage?: UiLanguagePreference
+  onSetUiLanguage?: (language: UiLanguagePreference) => void
   mcpStatus?: string
   onInstallMcp?: () => void
   aiAgentsStatus?: AiAgentsStatus
@@ -135,6 +142,8 @@ type CommandRegistryCoreActions = Pick<
   | 'onToggleInspector'
   | 'onToggleDiff'
   | 'onToggleRawEditor'
+  | 'noteLayout'
+  | 'onToggleNoteLayout'
   | 'onToggleAIChat'
 >
 type CommandRegistryVaultActions = Pick<
@@ -145,6 +154,10 @@ type CommandRegistryVaultActions = Pick<
   | 'canAddRemote'
   | 'onCheckForUpdates'
   | 'onCreateType'
+  | 'locale'
+  | 'systemLocale'
+  | 'selectedUiLanguage'
+  | 'onSetUiLanguage'
   | 'onRemoveActiveVault'
   | 'onRestoreGettingStarted'
   | 'isGettingStartedHidden'
@@ -378,6 +391,8 @@ function createCommandRegistryCoreConfig(
     onToggleInspector: config.onToggleInspector,
     onToggleDiff: config.onToggleDiff,
     onToggleRawEditor: config.onToggleRawEditor,
+    noteLayout: config.noteLayout,
+    onToggleNoteLayout: config.onToggleNoteLayout,
     onToggleAIChat: config.onToggleAIChat,
   }
 }
@@ -392,6 +407,10 @@ function createCommandRegistryVaultConfig(
     canAddRemote: config.canAddRemote ?? true,
     onCheckForUpdates: config.onCheckForUpdates,
     onCreateType: config.onCreateType,
+    locale: config.locale,
+    systemLocale: config.systemLocale,
+    selectedUiLanguage: config.selectedUiLanguage,
+    onSetUiLanguage: config.onSetUiLanguage,
     onRemoveActiveVault: config.onRemoveActiveVault,
     onRestoreGettingStarted: config.onRestoreGettingStarted,
     isGettingStartedHidden: config.isGettingStartedHidden,

@@ -4,8 +4,10 @@ import { EditorState } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { frontmatterHighlightPlugin, frontmatterHighlightTheme } from '../extensions/frontmatterHighlight'
 import { markdownLanguage } from '../extensions/markdownHighlight'
+import { RUNTIME_STYLE_NONCE } from '../lib/runtimeStyleNonce'
 import { resolveArrowLigatureInput } from '../utils/arrowLigatures'
 import { zoomCursorFix } from '../extensions/zoomCursorFix'
+import { nativeTextAssistanceDisabledAttributes } from '../lib/nativeTextAssistance'
 
 const FONT_FAMILY = '"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
 const RAW_EDITOR_COLORS = {
@@ -144,6 +146,8 @@ export function useCodeMirror(
         keymap.of([...defaultKeymap, ...historyKeymap]),
         buildSaveKeymap(callbacksRef),
         buildBaseTheme(),
+        EditorView.cspNonce.of(RUNTIME_STYLE_NONCE),
+        EditorView.contentAttributes.of(nativeTextAssistanceDisabledAttributes),
         markdownLanguage(),
         frontmatterHighlightTheme(),
         frontmatterHighlightPlugin,

@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import type { AiAgentId, AiAgentsStatus } from '../lib/aiAgents'
+import type { AppLocale, UiLanguagePreference } from '../lib/i18n'
 import type { VaultAiGuidanceStatus } from '../lib/vaultAiGuidance'
-import type { SidebarSelection, VaultEntry } from '../types'
+import type { NoteLayout, SidebarSelection, VaultEntry } from '../types'
 import type { NoteListFilter } from '../utils/noteListHelpers'
 import type { ViewMode } from './useViewMode'
 import { buildNavigationCommands } from './commands/navigationCommands'
@@ -40,6 +41,10 @@ interface CommandRegistryConfig {
   onRepairVault?: () => void
   onSetNoteIcon?: () => void
   onRemoveNoteIcon?: () => void
+  locale?: AppLocale
+  systemLocale?: AppLocale
+  selectedUiLanguage?: UiLanguagePreference
+  onSetUiLanguage?: (language: UiLanguagePreference) => void
   onChangeNoteType?: () => void
   onMoveNoteToFolder?: () => void
   canMoveNoteToFolder?: boolean
@@ -72,6 +77,8 @@ interface CommandRegistryConfig {
   onToggleInspector: () => void
   onToggleDiff?: () => void
   onToggleRawEditor?: () => void
+  noteLayout?: NoteLayout
+  onToggleNoteLayout?: () => void
   onToggleAIChat?: () => void
   activeNoteModified: boolean
   onCheckForUpdates?: () => void
@@ -101,7 +108,7 @@ export function useCommandRegistry(config: CommandRegistryConfig): import('./com
     activeTabPath, entries, modifiedCount,
     onQuickOpen, onCreateNote, onCreateNoteOfType, onSave, onOpenSettings, onOpenFeedback,
     onDeleteNote, onArchiveNote, onUnarchiveNote,
-    onCommitPush, onPull, onResolveConflicts, onSetViewMode, onToggleInspector, onToggleDiff, onToggleRawEditor, onToggleAIChat, onOpenVault, onCreateEmptyVault,
+    onCommitPush, onPull, onResolveConflicts, onSetViewMode, onToggleInspector, onToggleDiff, onToggleRawEditor, noteLayout, onToggleNoteLayout, onToggleAIChat, onOpenVault, onCreateEmptyVault,
     activeNoteModified,
     onZoomIn, onZoomOut, onZoomReset, zoomLevel,
     onSelect, onRenameFolder, onDeleteFolder,
@@ -112,6 +119,7 @@ export function useCommandRegistry(config: CommandRegistryConfig): import('./com
     mcpStatus, onInstallMcp, aiAgentsStatus, vaultAiGuidanceStatus,
     onOpenAiAgents, onRestoreVaultAiGuidance, onSetDefaultAiAgent, selectedAiAgent, onCycleDefaultAiAgent, selectedAiAgentLabel,
     onReloadVault, onRepairVault,
+    locale, systemLocale, selectedUiLanguage, onSetUiLanguage,
     onSetNoteIcon, onRemoveNoteIcon, activeNoteHasIcon, onChangeNoteType, onMoveNoteToFolder, canMoveNoteToFolder,
     onOpenInNewWindow, onToggleFavorite, onToggleOrganized,
     onCustomizeNoteListColumns, canCustomizeNoteListColumns,
@@ -169,13 +177,14 @@ export function useCommandRegistry(config: CommandRegistryConfig): import('./com
     }),
     ...buildViewCommands({
       hasActiveNote, activeNoteModified, onSetViewMode, onToggleInspector,
-      onToggleDiff, onToggleRawEditor, onToggleAIChat, zoomLevel, onZoomIn, onZoomOut, onZoomReset,
+      onToggleDiff, onToggleRawEditor, noteLayout, onToggleNoteLayout, onToggleAIChat, zoomLevel, onZoomIn, onZoomOut, onZoomReset,
       onCustomizeNoteListColumns, canCustomizeNoteListColumns, noteListColumnsLabel,
     }),
     ...buildSettingsCommands({
       mcpStatus, vaultCount, isGettingStartedHidden,
       onOpenSettings, onOpenFeedback, onOpenVault, onCreateEmptyVault, onRemoveActiveVault, onRestoreGettingStarted,
       onCheckForUpdates, onInstallMcp, onReloadVault, onRepairVault,
+      locale, systemLocale, selectedUiLanguage, onSetUiLanguage,
     }),
     ...buildAiAgentCommands({
       aiAgentsStatus,
@@ -193,7 +202,7 @@ export function useCommandRegistry(config: CommandRegistryConfig): import('./com
     hasActiveNote, activeTabPath, isArchived, modifiedCount, activeNoteModified,
     onQuickOpen, onCreateNote, onCreateNoteOfType, onCreateType, onSave, onOpenSettings, onOpenFeedback,
     onDeleteNote, onArchiveNote, onUnarchiveNote,
-    onCommitPush, onPull, onResolveConflicts, onSetViewMode, onToggleInspector, onToggleDiff, onToggleRawEditor, onToggleAIChat, onOpenVault, onCreateEmptyVault, config.canAddRemote, config.onAddRemote,
+    onCommitPush, onPull, onResolveConflicts, onSetViewMode, onToggleInspector, onToggleDiff, onToggleRawEditor, noteLayout, onToggleNoteLayout, onToggleAIChat, onOpenVault, onCreateEmptyVault, config.canAddRemote, config.onAddRemote,
     onCheckForUpdates,
     onZoomIn, onZoomOut, onZoomReset, zoomLevel,
     onSelect, onRenameFolder, onDeleteFolder,
@@ -203,7 +212,7 @@ export function useCommandRegistry(config: CommandRegistryConfig): import('./com
     onRemoveActiveVault, onRestoreGettingStarted, isGettingStartedHidden, vaultCount,
     mcpStatus, onInstallMcp, aiAgentsStatus, vaultAiGuidanceStatus,
     onOpenAiAgents, onRestoreVaultAiGuidance, onSetDefaultAiAgent, selectedAiAgent, onCycleDefaultAiAgent, selectedAiAgentLabel,
-    onReloadVault, onRepairVault,
+    onReloadVault, onRepairVault, locale, systemLocale, selectedUiLanguage, onSetUiLanguage,
     onSetNoteIcon, onRemoveNoteIcon, activeNoteHasIcon, onChangeNoteType, onMoveNoteToFolder, canMoveNoteToFolder,
     isSectionGroup, noteListFilter, onSetNoteListFilter,
     selection,

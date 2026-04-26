@@ -28,6 +28,8 @@ import { preFilterWikilinks, deduplicateByPath, MIN_QUERY_LENGTH } from '../util
 import { filterPersonMentions, PERSON_MENTION_MIN_QUERY } from '../utils/personMentionSuggestions'
 import { attachClickHandlers, enrichSuggestionItems } from '../utils/suggestionEnrichment'
 import { openExternalUrl } from '../utils/url'
+import { observeNativeTextAssistanceDisabled } from '../lib/nativeTextAssistance'
+import { getRuntimeStyleNonce } from '../lib/runtimeStyleNonce'
 import { WikilinkSuggestionMenu, type WikilinkSuggestionItem } from './WikilinkSuggestionMenu'
 import type { VaultEntry } from '../types'
 import { _wikilinkEntriesRef } from './editorSchema'
@@ -50,6 +52,7 @@ const CONTAINER_CLICK_IGNORE_SELECTOR = [
   '[contenteditable="true"]',
   '.bn-formatting-toolbar',
   '.bn-link-toolbar',
+  '.bn-side-menu',
   '.bn-form-popover',
   '[role="menu"]',
   '[role="dialog"]',
@@ -91,6 +94,7 @@ function SharedContextBlockNoteView(props: React.ComponentProps<typeof BlockNote
     <MantineProvider
       // BlockNote scopes Mantine defaults under `.bn-mantine` instead of `:root`.
       withCssVariables={false}
+      getStyleNonce={getRuntimeStyleNonce}
       getRootElement={() => undefined}
     >
       {view}
@@ -435,6 +439,12 @@ export function SingleEditorView({ editor, entries, onNavigateWikilink, onChange
   useEffect(() => {
     _wikilinkEntriesRef.current = entries
   }, [entries])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    return observeNativeTextAssistanceDisabled(container)
+  }, [])
 
   useSeedBlockNoteTableBridge(editor)
 
