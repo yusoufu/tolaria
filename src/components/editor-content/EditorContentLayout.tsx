@@ -6,6 +6,7 @@ import { ArchivedNoteBanner } from '../ArchivedNoteBanner'
 import { ConflictNoteBanner } from '../ConflictNoteBanner'
 import { RawEditorView } from '../RawEditorView'
 import { SingleEditorView } from '../SingleEditorView'
+import { ImagePreviewView } from '../ImagePreviewView'
 import type { useEditorContentModel } from './useEditorContentModel'
 
 type EditorContentModel = ReturnType<typeof useEditorContentModel>
@@ -218,6 +219,7 @@ export function EditorContentLayout(model: EditorContentModel) {
     onRawContentChange,
     onSave,
     showEditor,
+    isImageFile,
     isArchived,
     onUnarchiveNote,
     path,
@@ -298,16 +300,21 @@ export function EditorContentLayout(model: EditorContentModel) {
         rawLatestContentRef={rawLatestContentRef}
         vaultPath={vaultPath}
       />
-      <EditorCanvas
-        showEditor={showEditor}
-        cssVars={cssVars}
-        vaultPath={vaultPath}
-        editor={editor}
-        entries={entries}
-        onNavigateWikilink={onNavigateWikilink}
-        onEditorChange={onEditorChange}
-        isDeletedPreview={isDeletedPreview}
-      />
+      {isImageFile && vaultPath
+        ? <ImagePreviewView vaultPath={vaultPath} path={path} />
+        : (
+          <EditorCanvas
+            showEditor={showEditor}
+            cssVars={cssVars}
+            vaultPath={vaultPath}
+            editor={editor}
+            entries={entries}
+            onNavigateWikilink={onNavigateWikilink}
+            onEditorChange={onEditorChange}
+            isDeletedPreview={isDeletedPreview}
+          />
+        )
+      }
       {isLoadingNewTab && showEditor && <EditorLoadingSkeleton />}
     </div>
   )
